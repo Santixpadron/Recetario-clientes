@@ -1,78 +1,93 @@
-"use strict";
-
-/**
- * Estado de carga, vacío o error con la forma del contenido que reemplaza.
- * Emite "estado:reintentar" con { seccion } cuando se pulsa Reintentar.
- */
-class EstadoCarga extends Pseudocomponente {
+class EstadoCarga {
   constructor(contenedor, props = {}) {
-    super(contenedor, props);
+    this.contenedor = contenedor;
     this.estado = {
-      variante: props.variante || "carga",
-      tipo: props.tipo || "bloque",
-      mensaje: props.mensaje || "",
-      seccion: props.seccion || ""
+      modo: props.modo || 'cargando', // 'cargando' | 'vacio' | 'error'
+      forma: props.forma || 'tarjetas', // 'tarjetas' | 'destacada' | 'detalle'
+      cantidad: props.cantidad || 6,
+      titulo: props.titulo || '',
+      mensaje: props.mensaje || '',
+      mostrarReintentar: Boolean(props.mostrarReintentar)
     };
+    this.elemento = null;
+    this.manejadorReintentar = null;
+    this.crearElemento();
+    this.renderizar();
+    this.configurarEventos();
   }
 
-  crear() {
-    return DOM.crear("div", { clase: "estado" });
+  crearElemento() {
+    this.elemento = document.createElement('div');
+    this.contenedor.appendChild(this.elemento);
   }
 
-  render() {
-    DOM.vaciar(this.el);
-    this.el.className = `estado estado--${this.estado.variante} estado--${this.estado.tipo}`;
+  renderizar() {
+    this.elemento.textContent = '';
 
-    if (this.estado.variante === "carga") {
-      const bloques = DOM.crear("div", { clase: "estado__esqueleto" }, [
-        DOM.crear("span", { clase: "estado__bloque estado__bloque--titulo" }),
-        DOM.crear("span", { clase: "estado__bloque" }),
-        DOM.crear("span", { clase: "estado__bloque" }),
-        DOM.crear("span", { clase: "estado__bloque estado__bloque--corto" })
-      ]);
-      this.el.appendChild(bloques);
-      this.el.setAttribute("aria-busy", "true");
+    if (this.estado.modo === 'cargando') {
+      if (this.estado.forma === 'destacada') {
+        const esq = document.createElement('div');
+        esq.className = 'esqueleto-pulso esqueleto-destacada';
+        this.elemento.appendChild(esq);
+      } else if (this.estado.forma === 'detalle') {
+        const esq = document.createElement('div');
+        esq.className = 'esqueleto-pulso esqueleto-detalle';
+        this.elemento.appendChild(esq);
+      } else {
+        const grid = document.createElement('div');
+        grid.className = 'cuadricula-tarjetas';
+        for (let i = 0; i < this.estado.cantidad; i++) {
+          const item = document.createElement('div');
+          item.className = 'esqueleto-pulso esqueleto-tarjeta';
+          grid.appendChild(item);
+        }
+        this.elemento.appendChild(grid);
+      }
       return;
     }
 
-    this.el.removeAttribute("aria-busy");
+    const bloque = document.createElement('div');
+    bloque.className = `bloque-estado ${this.estado.modo === 'error' ? 'es-error' : ''}`;
 
-    const titulo =
-      this.estado.variante === "error" ? "No se pudo cargar" : "Sin contenido";
-    const mensaje =
-      this.estado.mensaje ||
-      (this.estado.variante === "error"
-        ? "Intenta de nuevo en unos segundos."
-        : "Todavía no hay información para mostrar.");
+    const tituloEl = document.createElement('h3');
+    tituloEl.textContent =
+      this.estado.titulo ||
+      (this.estado.modo === 'error' ? 'Ocurrió un inconveniente' : 'Sin resultados para mostrar');
+    bloque.appendChild(tituloEl);
 
-    this.el.appendChild(
-      DOM.crear("h3", { clase: "estado__titulo", texto: titulo })
-    );
-    this.el.appendChild(
-      DOM.crear("p", { clase: "estado__mensaje", texto: mensaje })
-    );
-
-    if (this.estado.variante === "error") {
-      this.el.appendChild(
-        DOM.crear("button", {
-          clase: "boton boton--secundario",
-          texto: "Reintentar",
-          attrs: { type: "button", "data-accion": "reintentar" }
-        })
-      );
+    if (this.estado.mensaje) {
+      const parrafo = document.createElement('p');
+      parrafo.textContent = this.estado.mensaje;
+      bloque.appendChild(parrafo);
     }
+
+    if (this.estado.mostrarReintentar) {
+      const boton = document.createElement('button');
+      boton.type = 'button';
+      boton.className = 'btn btn-primario btn-reintentar';
+      boton.textContent = 'Reintentar';
+      bloque.appendChild(boton);
+    }
+
+    this.elemento.appendChild(bloque);
   }
 
-  eventos() {
-    this.escuchar(this.el, "click", (evento) => {
-      const boton = evento.target.closest('[data-accion="reintentar"]');
-      if (!boton) return;
-      this.emitir("estado:reintentar", { seccion: this.estado.seccion });
-    });
+  configurarEventos() {
+    this.manejadorReintentar = (e) => {
+      if (e.target.classList.contains('btn-reintentar')) {
+        this.elemento.dispatchEvent(
+          new CustomEvent('reintentar-accion', { bubbles: true })
+        );
+      }
+    };
+    this.elemento.addEventListener('click', this.manejadorReintentar);
   }
 
-  actualizar(props = {}) {
-    Object.assign(this.estado, props);
-    if (this.el) this.render();
+  destruir() {
+    if (this.elemento) {
+      this.elemento.removeEventListener('click', this.manejadorReintentar);
+      this.elemento.remove();
+      this.elemento = null;
+    }
   }
 }

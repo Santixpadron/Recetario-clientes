@@ -1,102 +1,102 @@
-"use strict";
-
-/**
- * Barra de navegación permanente.
- * Emite "nav:ir" con { vista }.
- */
-class BarraNavegacion extends Pseudocomponente {
+class BarraNavegacion {
   constructor(contenedor, props = {}) {
-    super(contenedor, props);
+    this.contenedor = contenedor;
     this.estado = {
-      vistaActiva: props.vistaActiva || "inicio",
+      vistaActiva: props.vistaActiva || 'inicio',
       cantidadComparador: props.cantidadComparador || 0
     };
+    this.elemento = null;
+    this.manejadorClick = null;
+    this.crearElemento();
+    this.renderizar();
+    this.configurarEventos();
   }
 
-  crear() {
-    return DOM.crear("nav", {
-      clase: "nav",
-      attrs: { "aria-label": "Navegación principal" }
-    });
+  crearElemento() {
+    this.elemento = document.createElement('nav');
+    this.elemento.className = 'barra-nav';
+    this.elemento.setAttribute('aria-label', 'Navegación principal');
+    this.contenedor.appendChild(this.elemento);
   }
 
-  render() {
-    DOM.vaciar(this.el);
+  actualizarEstado(nuevoEstado) {
+    this.estado = { ...this.estado, ...nuevoEstado };
+    this.renderizar();
+  }
 
-    const marca = DOM.crear(
-      "a",
-      {
-        clase: "nav__marca",
-        href: "#inicio",
-        dataset: { vista: "inicio" }
-      },
-      [
-        DOM.crear("img", {
-          src: "assets/icono.svg",
-          alt: "",
-          attrs: { "aria-hidden": "true" }
-        }),
-        "Recetario"
-      ]
-    );
+  renderizar() {
+    this.elemento.textContent = '';
 
-    const enlaces = [
-      { vista: "inicio", etiqueta: "Inicio" },
-      { vista: "explorar", etiqueta: "Explorar" },
-      { vista: "categorias", etiqueta: "Categorías y orígenes" },
-      { vista: "comparador", etiqueta: "Comparador" }
+    const botonLogo = document.createElement('button');
+    botonLogo.type = 'button';
+    botonLogo.className = 'marca-logo';
+    botonLogo.dataset.vista = 'inicio';
+
+    const textoLogo = document.createElement('span');
+    textoLogo.textContent = 'UmamiLab';
+    const subLogo = document.createElement('span');
+    subLogo.className = 'marca-subtitulo';
+    subLogo.textContent = 'TheMealDB';
+
+    botonLogo.appendChild(textoLogo);
+    botonLogo.appendChild(subLogo);
+
+    const lista = document.createElement('ul');
+    lista.className = 'nav-lista';
+
+    const items = [
+      { id: 'inicio', texto: 'Inicio' },
+      { id: 'explorar', texto: 'Explorar' },
+      { id: 'categorias-origenes', texto: 'Categorías y orígenes' },
+      { id: 'comparador', texto: 'Comparador', conContador: true }
     ];
 
-    const lista = DOM.crear("ul", { clase: "nav__lista" });
+    items.forEach((item) => {
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.dataset.vista = item.id;
+      btn.className = `nav-boton ${this.estado.vistaActiva === item.id ? 'activo' : ''}`;
 
-    for (const enlace of enlaces) {
-      const activo = enlace.vista === this.estado.vistaActiva;
+      const spanTexto = document.createElement('span');
+      spanTexto.textContent = item.texto;
+      btn.appendChild(spanTexto);
 
-      const contenido = [enlace.etiqueta];
-
-      if (enlace.vista === "comparador") {
-        contenido.push(
-          DOM.crear("span", {
-            clase: "nav__badge",
-            texto: String(this.estado.cantidadComparador),
-            attrs: {
-              "aria-label": `${this.estado.cantidadComparador} recetas en el comparador`
-            }
-          })
-        );
+      if (item.conContador) {
+        const badge = document.createElement('span');
+        badge.className = 'insignia-comparador';
+        badge.textContent = `${this.estado.cantidadComparador}/2`;
+        btn.appendChild(badge);
       }
 
-      const item = DOM.crear("li", {}, [
-        DOM.crear(
-          "a",
-          {
-            clase: "nav__enlace",
-            href: `#${enlace.vista}`,
-            dataset: { vista: enlace.vista },
-            attrs: activo ? { "aria-current": "page" } : {}
-          },
-          contenido
-        )
-      ]);
-
-      lista.appendChild(item);
-    }
-
-    this.el.appendChild(marca);
-    this.el.appendChild(lista);
-  }
-
-  eventos() {
-    this.escuchar(this.el, "click", (evento) => {
-      const enlace = evento.target.closest("[data-vista]");
-      if (!enlace) return;
-      evento.preventDefault();
-      this.emitir("nav:ir", { vista: enlace.dataset.vista });
+      li.appendChild(btn);
+      lista.appendChild(li);
     });
+
+    this.elemento.appendChild(botonLogo);
+    this.elemento.appendChild(lista);
   }
 
-  actualizar(props = {}) {
-    Object.assign(this.estado, props);
-    if (this.el) this.render();
+  configurarEventos() {
+    this.manejadorClick = (e) => {
+      const boton = e.target.closest('[data-vista]');
+      if (!boton) return;
+      const destino = boton.dataset.vista;
+      this.elemento.dispatchEvent(
+        new CustomEvent('navegar-vista', {
+          bubbles: true,
+          detail: { vista: destino }
+        })
+      );
+    };
+    this.elemento.addEventListener('click', this.manejadorClick);
+  }
+
+  destruir() {
+    if (this.elemento) {
+      this.elemento.removeEventListener('click', this.manejadorClick);
+      this.elemento.remove();
+      this.elemento = null;
+    }
   }
 }
