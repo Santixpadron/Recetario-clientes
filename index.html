@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Recetario: aplicación web para explorar, consultar y comparar recetas con TheMealDB.">
+  <title>Recetario — Proyecto 2</title>
+  <link rel="icon" href="assets/icono.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/componentes.css">
+  <link rel="stylesheet" href="css/vistas.css">
+</head>
+<body>
+  <a class="salto-contenido" href="#vista">Saltar al contenido</a>
+
+  <header class="cabecera">
+    <div id="barra-navegacion"></div>
+  </header>
+
+  <main id="vista" class="vista" tabindex="-1"></main>
+
+  <footer class="pie">
+    <p>Proyecto 2 — Desarrollo de Lenguajes para Clientes Web</p>
+    <p>Datos de <a href="https://www.themealdb.com/" target="_blank" rel="noopener noreferrer">TheMealDB</a></p>
+  </footer>
+
+  <div id="avisos" class="avisos" aria-live="polite" aria-atomic="true"></div>
+
+  <noscript>
+    <p class="sin-js">Esta aplicación necesita JavaScript para funcionar.</p>
+  </noscript>
+
+  <!-- Utilidades -->
+  <script defer src="js/util/dom.js"></script>
+
+  <!-- Servicios -->
+  <script defer src="js/servicios/api.js"></script>
+  <script defer src="js/servicios/cache.js"></script>
+  <script defer src="js/servicios/recetas.js"></script>
+  <script defer src="js/servicios/comparacion.js"></script>
+
+  <!-- Estado global -->
+  <script defer src="js/estado.js"></script>
+
+  <!-- Componentes -->
+  <script defer src="js/componentes/Pseudocomponente.js"></script>
+  <script defer src="js/componentes/Aviso.js"></script>
+  <script defer src="js/componentes/EstadoCarga.js"></script>
+  <script defer src="js/componentes/Modal.js"></script>
+  <script defer src="js/componentes/BarraNavegacion.js"></script>
+  <script defer src="js/componentes/TarjetaReceta.js"></script>
+  <script defer src="js/componentes/Paginador.js"></script>
+  <script defer src="js/componentes/FormularioBusqueda.js"></script>
+  <script defer src="js/componentes/ListaIngredientes.js"></script>
+  <script defer src="js/componentes/PasosPreparacion.js"></script>
+  <script defer src="js/componentes/PanelComparador.js"></script>
+  <script defer src="js/componentes/TablaComparacion.js"></script>
+
+  <!-- Vistas -->
+  <script defer src="js/vistas/VistaInicio.js"></script>
+  <script defer src="js/vistas/VistaExplorar.js"></script>
+  <script defer src="js/vistas/VistaDetalle.js"></script>
+  <script defer src="js/vistas/VistaCategoriasOrigenes.js"></script>
+  <script defer src="js/vistas/VistaComparador.js"></script>
+
+  <!-- Punto de entrada -->
+  <script defer src="js/app.js"></script>
+</body>
+</html>

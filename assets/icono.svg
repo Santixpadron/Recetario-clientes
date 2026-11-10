@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Recetario">
+  <circle cx="32" cy="32" r="30" fill="#c4472d"/>
+  <path d="M18 31h28c0 9-6.3 16-14 16s-14-7-14-16Z" fill="#fbf7f0"/>
+  <path d="M25 23c0-4 3-7 7-7s7 3 7 7" fill="none" stroke="#fbf7f0" stroke-width="3" stroke-linecap="round"/>
+  <path d="M15 49h34" stroke="#fbf7f0" stroke-width="3" stroke-linecap="round"/>
+</svg>
