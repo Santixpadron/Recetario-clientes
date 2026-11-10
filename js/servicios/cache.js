@@ -1,54 +1,45 @@
-"use strict";
-
-/**
- * Caché en memoria. Guarda promesas para deduplicar peticiones en vuelo.
- * Si una promesa falla, se elimina para permitir el reintento.
- */
-const Cache = {
-  recetas: new Map(),
-  listas: new Map(),
-
-  obtenerReceta(id, cargador) {
-    const clave = String(id);
-    if (this.recetas.has(clave)) return this.recetas.get(clave);
-
-    const promesa = (async () => {
-      try {
-        const receta = await cargador();
-        if (!receta) throw new Error("Receta no encontrada.");
-        return receta;
-      } catch (error) {
-        this.recetas.delete(clave);
-        throw error;
-      }
-    })();
-
-    this.recetas.set(clave, promesa);
-    return promesa;
-  },
-
-  obtenerLista(clave, cargador) {
-    if (this.listas.has(clave)) return this.listas.get(clave);
-
-    const promesa = (async () => {
-      try {
-        return await cargador();
-      } catch (error) {
-        this.listas.delete(clave);
-        throw error;
-      }
-    })();
-
-    this.listas.set(clave, promesa);
-    return promesa;
-  },
-
-  tieneReceta(id) {
-    return this.recetas.has(String(id));
-  },
-
-  limpiar() {
-    this.recetas.clear();
-    this.listas.clear();
+class ServicioCache {
+  constructor() {
+    this.recetasCompletas = new Map();
+    this.categorias = null;
+    this.origenes = null;
+    this.ingredientes = null;
   }
-};
+
+  obtenerReceta(idMeal) {
+    if (!idMeal) return null;
+    return this.recetasCompletas.get(String(idMeal)) || null;
+  }
+
+  guardarReceta(recetaNormalizada) {
+    if (recetaNormalizada && recetaNormalizada.id) {
+      this.recetasCompletas.set(String(recetaNormalizada.id), recetaNormalizada);
+    }
+  }
+
+  obtenerCategorias() {
+    return this.categorias;
+  }
+
+  guardarCategorias(lista) {
+    this.categorias = lista;
+  }
+
+  obtenerOrigenes() {
+    return this.origenes;
+  }
+
+  guardarOrigenes(lista) {
+    this.origenes = lista;
+  }
+
+  obtenerIngredientes() {
+    return this.ingredientes;
+  }
+
+  guardarIngredientes(lista) {
+    this.ingredientes = lista;
+  }
+}
+
+const cacheMemoria = new ServicioCache();

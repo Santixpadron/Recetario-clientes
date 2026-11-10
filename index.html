@@ -3,67 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Recetario: aplicación web para explorar, consultar y comparar recetas con TheMealDB.">
-  <title>Recetario — Proyecto 2</title>
-  <link rel="icon" href="assets/icono.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/componentes.css">
-  <link rel="stylesheet" href="css/vistas.css">
+  <title>UmamiLab — Explorador y Comparador Culinario</title>
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <a class="salto-contenido" href="#vista">Saltar al contenido</a>
+  <header id="contenedor-navegacion" class="cabecera-principal"></header>
 
-  <header class="cabecera">
-    <div id="barra-navegacion"></div>
-  </header>
+  <div id="contenedor-notificaciones" class="notificaciones-contenedor" aria-live="polite"></div>
+  <div id="contenedor-modal-reemplazo" class="modal-reemplazo-oculto"></div>
 
-  <main id="vista" class="vista" tabindex="-1"></main>
+  <main id="contenedor-vista" class="contenedor-principal" tabindex="-1"></main>
 
-  <footer class="pie">
-    <p>Proyecto 2 — Desarrollo de Lenguajes para Clientes Web</p>
-    <p>Datos de <a href="https://www.themealdb.com/" target="_blank" rel="noopener noreferrer">TheMealDB</a></p>
+  <footer class="pie-pagina">
+    <p><strong>UmamiLab</strong> — Laboratorio Gastronómico SPA impulsado por TheMealDB API</p>
   </footer>
 
-  <div id="avisos" class="avisos" aria-live="polite" aria-atomic="true"></div>
+  <!-- 1. Servicios -->
+  <script src="js/servicios/cache.js"></script>
+  <script src="js/servicios/recetas.js"></script>
+  <script src="js/servicios/api.js"></script>
+  <script src="js/servicios/comparacion.js"></script>
 
-  <noscript>
-    <p class="sin-js">Esta aplicación necesita JavaScript para funcionar.</p>
-  </noscript>
+  <!-- 2. Pseudocomponentes -->
+  <script src="js/componentes/EstadoCarga.js"></script>
+  <script src="js/componentes/BarraNavegacion.js"></script>
+  <script src="js/componentes/TarjetaReceta.js"></script>
+  <script src="js/componentes/Paginador.js"></script>
+  <script src="js/componentes/FormularioBusqueda.js"></script>
+  <script src="js/componentes/ListaIngredientes.js"></script>
+  <script src="js/componentes/PasosPreparacion.js"></script>
+  <script src="js/componentes/PanelComparador.js"></script>
+  <script src="js/componentes/TablaComparacion.js"></script>
 
-  <!-- Utilidades -->
-  <script defer src="js/util/dom.js"></script>
+  <!-- 3. Vistas -->
+  <script src="js/vistas/VistaInicio.js"></script>
+  <script src="js/vistas/VistaExplorar.js"></script>
+  <script src="js/vistas/VistaDetalle.js"></script>
+  <script src="js/vistas/VistaCategoriasOrigenes.js"></script>
+  <script src="js/vistas/VistaComparador.js"></script>
 
-  <!-- Servicios -->
-  <script defer src="js/servicios/api.js"></script>
-  <script defer src="js/servicios/cache.js"></script>
-  <script defer src="js/servicios/recetas.js"></script>
-  <script defer src="js/servicios/comparacion.js"></script>
-
-  <!-- Estado global -->
-  <script defer src="js/estado.js"></script>
-
-  <!-- Componentes -->
-  <script defer src="js/componentes/Pseudocomponente.js"></script>
-  <script defer src="js/componentes/Aviso.js"></script>
-  <script defer src="js/componentes/EstadoCarga.js"></script>
-  <script defer src="js/componentes/Modal.js"></script>
-  <script defer src="js/componentes/BarraNavegacion.js"></script>
-  <script defer src="js/componentes/TarjetaReceta.js"></script>
-  <script defer src="js/componentes/Paginador.js"></script>
-  <script defer src="js/componentes/FormularioBusqueda.js"></script>
-  <script defer src="js/componentes/ListaIngredientes.js"></script>
-  <script defer src="js/componentes/PasosPreparacion.js"></script>
-  <script defer src="js/componentes/PanelComparador.js"></script>
-  <script defer src="js/componentes/TablaComparacion.js"></script>
-
-  <!-- Vistas -->
-  <script defer src="js/vistas/VistaInicio.js"></script>
-  <script defer src="js/vistas/VistaExplorar.js"></script>
-  <script defer src="js/vistas/VistaDetalle.js"></script>
-  <script defer src="js/vistas/VistaCategoriasOrigenes.js"></script>
-  <script defer src="js/vistas/VistaComparador.js"></script>
-
-  <!-- Punto de entrada -->
-  <script defer src="js/app.js"></script>
+  <!-- 4. Punto de entrada -->
+  <script src="js/app.js"></script>
 </body>
 </html>

@@ -1,79 +1,150 @@
-"use strict";
+const URL_BASE_API = 'https://www.themealdb.com/api/json/v1/1/';
 
-class ErrorRed extends Error {
-  constructor(causa) {
-    super("No se pudo conectar con el servicio. Revisa tu conexión.");
-    this.name = "ErrorRed";
-    this.causa = causa;
+class ErrorApi extends Error {
+  constructor(tipo, mensaje, codigoEstado = null) {
+    super(mensaje);
+    this.tipo = tipo; // 'SIN_CONEXION' | 'SERVICIO_NO_DISPONIBLE' | 'ABORTADO'
+    this.codigoEstado = codigoEstado;
   }
 }
 
-class ErrorServicio extends Error {
-  constructor(estado) {
-    super(`El servicio respondió con estado ${estado}.`);
-    this.name = "ErrorServicio";
-    this.estado = estado;
-  }
-}
-
-/**
- * Función de petición centralizada.
- * - Verifica response.ok antes de leer el JSON.
- * - Distingue ErrorRed (sin conexión), ErrorServicio (estado HTTP) y AbortError.
- */
-const API = {
-  BASE: "https://www.themealdb.com/api/json/v1/1/",
-
-  async peticion(ruta, opciones = {}) {
+const ServicioApi = {
+  async peticionCentralizada(endpoint, opciones = {}) {
+    let respuesta;
     try {
-      const respuesta = await fetch(this.BASE + ruta, { signal: opciones.signal });
-      if (!respuesta.ok) throw new ErrorServicio(respuesta.status);
-
-      try {
-        return await respuesta.json();
-      } catch (error) {
-        throw new ErrorServicio(respuesta.status);
-      }
+      respuesta = await fetch(`${URL_BASE_API}${endpoint}`, {
+        signal: opciones.signal
+      });
     } catch (error) {
-      if (error.name === "AbortError") throw error;
-      if (error instanceof ErrorServicio) throw error;
-      throw new ErrorRed(error);
+      if (error && error.name === 'AbortError') {
+        throw new ErrorApi('ABORTADO', 'Petición cancelada por el usuario.');
+      }
+      throw new ErrorApi(
+        'SIN_CONEXION',
+        'No fue posible conectar con el servidor. Verifica tu conexión a internet.'
+      );
+    }
+
+    if (!respuesta.ok) {
+      throw new ErrorApi(
+        'SERVICIO_NO_DISPONIBLE',
+        `El servicio respondió con un estado de error (${respuesta.status}).`,
+        respuesta.status
+      );
+    }
+
+    try {
+      return await respuesta.json();
+    } catch (error) {
+      throw new ErrorApi('SERVICIO_NO_DISPONIBLE', 'Respuesta inválida del servidor.');
     }
   },
 
-  buscarPorNombre(nombre, opciones = {}) {
-    return this.peticion(`search.php?s=${encodeURIComponent(nombre)}`, opciones);
+  async buscarPorNombre(nombre, signal) {
+    const datos = await this.peticionCentralizada(
+      `search.php?s=${encodeURIComponent(nombre.trim())}`,
+      { signal }
+    );
+    if (!datos.meals) return [];
+    return datos.meals.map((item) => {
+      const normalizada = ServicioRecetas.normalizarCompleta(item);
+      cacheMemoria.guardarReceta(normalizada);
+      return normalizada;
+    });
   },
 
-  obtenerReceta(id, opciones = {}) {
-    return this.peticion(`lookup.php?i=${encodeURIComponent(id)}`, opciones);
+  async obtenerRecetaPorId(id, signal) {
+    const enCache = cacheMemoria.obtenerReceta(id);
+    if (enCache) return enCache;
+
+    const datos = await this.peticionCentralizada(
+      `lookup.php?i=${encodeURIComponent(id)}`,
+      { signal }
+    );
+    if (!datos.meals || !datos.meals[0]) {
+      throw new ErrorApi('SERVICIO_NO_DISPONIBLE', 'No se encontró la receta solicitada.');
+    }
+    const normalizada = ServicioRecetas.normalizarCompleta(datos.meals[0]);
+    cacheMemoria.guardarReceta(normalizada);
+    return normalizada;
   },
 
-  recetaAleatoria(opciones = {}) {
-    return this.peticion("random.php", opciones);
+  async obtenerRecetaAleatoria(idExcluir = null) {
+    let intentos = 0;
+    while (intentos < 5) {
+      intentos++;
+      const datos = await this.peticionCentralizada('random.php');
+      if (datos.meals && datos.meals[0]) {
+        const normalizada = ServicioRecetas.normalizarCompleta(datos.meals[0]);
+        cacheMemoria.guardarReceta(normalizada);
+        if (!idExcluir || normalizada.id !== String(idExcluir) || intentos === 5) {
+          return normalizada;
+        }
+      }
+    }
+    throw new ErrorApi('SERVICIO_NO_DISPONIBLE', 'No se pudo obtener una receta aleatoria.');
   },
 
-  listarCategorias(opciones = {}) {
-    return this.peticion("categories.php", opciones);
+  async obtenerCategorias() {
+    const enCache = cacheMemoria.obtenerCategorias();
+    if (enCache) return enCache;
+
+    const datos = await this.peticionCentralizada('categories.php');
+    const lista = (datos.categories || []).map((c) => ({
+      id: c.idCategory,
+      nombre: c.strCategory,
+      imagen: c.strCategoryThumb,
+      descripcion: (c.strCategoryDescription || '').trim()
+    }));
+    cacheMemoria.guardarCategorias(lista);
+    return lista;
   },
 
-  listarOrigenes(opciones = {}) {
-    return this.peticion("list.php?a=list", opciones);
+  async obtenerOrigenes() {
+    const enCache = cacheMemoria.obtenerOrigenes();
+    if (enCache) return enCache;
+
+    const datos = await this.peticionCentralizada('list.php?a=list');
+    const lista = (datos.meals || [])
+      .map((m) => (m.strArea || '').trim())
+      .filter(Boolean);
+    cacheMemoria.guardarOrigenes(lista);
+    return lista;
   },
 
-  listarIngredientes(opciones = {}) {
-    return this.peticion("list.php?i=list", opciones);
+  async obtenerIngredientes() {
+    const enCache = cacheMemoria.obtenerIngredientes();
+    if (enCache) return enCache;
+
+    const datos = await this.peticionCentralizada('list.php?i=list');
+    const lista = (datos.meals || [])
+      .map((m) => (m.strIngredient || '').trim())
+      .filter(Boolean);
+    cacheMemoria.guardarIngredientes(lista);
+    return lista;
   },
 
-  filtrarPorCategoria(categoria, opciones = {}) {
-    return this.peticion(`filter.php?c=${encodeURIComponent(categoria)}`, opciones);
+  async filtrarPorCategoria(categoria) {
+    const datos = await this.peticionCentralizada(
+      `filter.php?c=${encodeURIComponent(categoria)}`
+    );
+    if (!datos.meals) return [];
+    return datos.meals.map((m) => ServicioRecetas.normalizarResumen(m));
   },
 
-  filtrarPorOrigen(origen, opciones = {}) {
-    return this.peticion(`filter.php?a=${encodeURIComponent(origen)}`, opciones);
+  async filtrarPorOrigen(origen) {
+    const datos = await this.peticionCentralizada(
+      `filter.php?a=${encodeURIComponent(origen)}`
+    );
+    if (!datos.meals) return [];
+    return datos.meals.map((m) => ServicioRecetas.normalizarResumen(m));
   },
 
-  filtrarPorIngrediente(ingrediente, opciones = {}) {
-    return this.peticion(`filter.php?i=${encodeURIComponent(ingrediente)}`, opciones);
+  async filtrarPorIngrediente(ingrediente) {
+    const datos = await this.peticionCentralizada(
+      `filter.php?i=${encodeURIComponent(ingrediente)}`
+    );
+    if (!datos.meals) return [];
+    return datos.meals.map((m) => ServicioRecetas.normalizarResumen(m));
   }
 };
