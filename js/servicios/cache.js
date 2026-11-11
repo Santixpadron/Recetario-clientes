@@ -1,54 +1,79 @@
 "use strict";
 
 /**
- * Caché en memoria. Guarda promesas para deduplicar peticiones en vuelo.
- * Si una promesa falla, se elimina para permitir el reintento.
+ * Caché en memoria de UmamiLab.
+ *
+ * PROVISIONAL — archivo asignado al Integrante 1.
+ * Se deja una versión funcional para que la mitad del Integrante 2 pueda
+ * ejecutarse y probarse. No usa localStorage: la caché vive solo en la sesión.
  */
-const Cache = {
-  recetas: new Map(),
-  listas: new Map(),
+class ServicioCache {
+  constructor() {
+    this.recetas = new Map();
+    this.categorias = null;
+    this.origenes = null;
+    this.ingredientes = null;
+    this.enVuelo = new Map();
+  }
 
-  obtenerReceta(id, cargador) {
-    const clave = String(id);
-    if (this.recetas.has(clave)) return this.recetas.get(clave);
+  obtenerReceta(id) {
+    return this.recetas.get(String(id)) || null;
+  }
 
-    const promesa = (async () => {
-      try {
-        const receta = await cargador();
-        if (!receta) throw new Error("Receta no encontrada.");
-        return receta;
-      } catch (error) {
-        this.recetas.delete(clave);
-        throw error;
-      }
-    })();
+  guardarReceta(receta) {
+    if (receta && receta.id) this.recetas.set(String(receta.id), receta);
+    return receta;
+  }
 
-    this.recetas.set(clave, promesa);
+  obtenerCategorias() {
+    return this.categorias;
+  }
+
+  guardarCategorias(lista) {
+    this.categorias = Array.isArray(lista) ? lista : [];
+    return this.categorias;
+  }
+
+  obtenerOrigenes() {
+    return this.origenes;
+  }
+
+  guardarOrigenes(lista) {
+    this.origenes = Array.isArray(lista) ? lista : [];
+    return this.origenes;
+  }
+
+  obtenerIngredientes() {
+    return this.ingredientes;
+  }
+
+  guardarIngredientes(lista) {
+    this.ingredientes = Array.isArray(lista) ? lista : [];
+    return this.ingredientes;
+  }
+
+  /**
+   * Deduplica peticiones simultáneas: si dos vistas piden lo mismo a la vez,
+   * ambas reciben la misma promesa en lugar de lanzar dos fetch.
+   */
+  pedirUnaVez(clave, productor) {
+    if (this.enVuelo.has(clave)) return this.enVuelo.get(clave);
+
+    const promesa = Promise.resolve()
+      .then(productor)
+      .finally(() => this.enVuelo.delete(clave));
+
+    this.enVuelo.set(clave, promesa);
     return promesa;
-  },
-
-  obtenerLista(clave, cargador) {
-    if (this.listas.has(clave)) return this.listas.get(clave);
-
-    const promesa = (async () => {
-      try {
-        return await cargador();
-      } catch (error) {
-        this.listas.delete(clave);
-        throw error;
-      }
-    })();
-
-    this.listas.set(clave, promesa);
-    return promesa;
-  },
-
-  tieneReceta(id) {
-    return this.recetas.has(String(id));
-  },
+  }
 
   limpiar() {
     this.recetas.clear();
-    this.listas.clear();
+    this.categorias = null;
+    this.origenes = null;
+    this.ingredientes = null;
+    this.enVuelo.clear();
   }
-};
+}
+
+const cacheMemoria = new ServicioCache();

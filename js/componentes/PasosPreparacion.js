@@ -1,45 +1,17 @@
-"use strict";
+﻿"use strict";
 
-/**
- * Pasos de preparación numerados.
- * Los pasos ya vienen filtrados desde Recetas.parsearPasos().
- */
-class PasosPreparacion extends Pseudocomponente {
-  constructor(contenedor, props = {}) {
-    super(contenedor, props);
-    this.estado = {
-      pasos: props.pasos || []
-    };
+/* PROVISIONAL: marcador de posición. Se implementa en el siguiente commit. */
+class PasosPreparacion {
+  constructor(contenedor) {
+    this.contenedor = contenedor;
+    this.elemento = document.createElement("div");
+    this.elemento.className = "estado-mensaje";
+    this.elemento.textContent = "Componente PasosPreparacion en construcción.";
+    if (contenedor) contenedor.appendChild(this.elemento);
   }
 
-  crear() {
-    return DOM.crear("div", { clase: "pasos-contenedor" });
-  }
-
-  render() {
-    DOM.vaciar(this.el);
-
-    if (!this.estado.pasos.length) {
-      this.el.appendChild(
-        DOM.crear("p", {
-          clase: "nota",
-          texto: "Esta receta no tiene pasos registrados."
-        })
-      );
-      return;
-    }
-
-    const lista = DOM.crear("ol", { clase: "pasos" });
-
-    for (const paso of this.estado.pasos) {
-      lista.appendChild(DOM.crear("li", { texto: paso }));
-    }
-
-    this.el.appendChild(lista);
-  }
-
-  actualizar(props = {}) {
-    Object.assign(this.estado, props);
-    if (this.el) this.render();
+  destruir() {
+    if (this.elemento) this.elemento.remove();
+    this.elemento = null;
   }
 }

@@ -1,133 +1,144 @@
 "use strict";
 
 /**
- * Normalización de respuestas de TheMealDB.
- * Aquí se concentran ingredientes, pasos, etiquetas y listas auxiliares.
+ * Normalización de las respuestas de TheMealDB.
+ *
+ * Responsabilidad del Integrante 2. Convierte los objetos crudos de la API en
+ * un modelo estable para toda la aplicación: resumen para tarjetas y receta
+ * completa para el detalle y el comparador.
  */
-const Recetas = {
+const ServicioRecetas = {
   texto(valor) {
-    return String(valor ?? "").trim();
+    return typeof valor === "string" ? valor.trim() : "";
   },
 
-  normalizarResumen(raw) {
+  /** Clave de comparación: sin mayúsculas, sin acentos y con espacios simples. */
+  clave(texto) {
+    return this.texto(texto)
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ");
+  },
+
+  normalizarResumen(cruda) {
+    const datos = cruda || {};
     return {
-      id: String(raw?.idMeal ?? ""),
-      nombre: this.texto(raw?.strMeal),
-      imagen: this.texto(raw?.strMealThumb)
+      id: String(datos.idMeal || ""),
+      nombre: this.texto(datos.strMeal),
+      imagen: this.texto(datos.strMealThumb),
+      categoria: this.texto(datos.strCategory),
+      origen: this.texto(datos.strArea),
+      completa: false
     };
   },
 
-  normalizarReceta(raw) {
-    return {
-      id: String(raw?.idMeal ?? ""),
-      nombre: this.texto(raw?.strMeal),
-      imagen: this.texto(raw?.strMealThumb),
-      categoria: this.texto(raw?.strCategory),
-      origen: this.texto(raw?.strArea),
-      instrucciones: this.texto(raw?.strInstructions),
-      pasos: this.parsearPasos(raw?.strInstructions),
-      etiquetas: this.parsearEtiquetas(raw?.strTags),
-      video: this.texto(raw?.strYoutube) || null,
-      ingredientes: this.extraerIngredientes(raw)
-    };
-  },
+  normalizarEtiquetas(crudas) {
+    if (!crudas) return [];
 
-  extraerIngredientes(raw) {
-    const ingredientes = [];
-    if (!raw) return ingredientes;
-
-    for (let i = 1; i <= 20; i += 1) {
-      const nombre = this.texto(raw[`strIngredient${i}`]);
-      const medida = this.texto(raw[`strMeasure${i}`]);
-      if (!nombre) continue;
-
-      ingredientes.push({
-        nombre,
-        medida,
-        imagen: this.imagenIngrediente(nombre)
-      });
-    }
-
-    return ingredientes;
-  },
-
-  parsearPasos(instrucciones) {
-    const lineas = String(instrucciones ?? "")
-      .split(/\r?\n/)
-      .map((linea) => linea.trim())
-      .filter((linea) => linea.length > 0);
-
-    // Solo se descartan las líneas que son únicamente un encabezado
-    // ("STEP 1", "Paso 1:", "1."). Una línea con contenido se conserva.
-    const soloEncabezado = /^(step|paso)\s*\d+\s*[.)\-:]?$/i;
-    const soloNumero = /^\d+\s*[.)\-:]?$/;
-
-    return lineas.filter(
-      (linea) => !soloEncabezado.test(linea) && !soloNumero.test(linea)
-    );
-  },
-
-  parsearEtiquetas(tags) {
-    const etiquetas = [];
     const vistas = new Set();
+    const etiquetas = [];
 
-    for (const parte of String(tags ?? "").split(",")) {
-      const etiqueta = parte.trim();
-      if (!etiqueta) continue;
-
-      const clave = etiqueta.toLowerCase();
-      if (vistas.has(clave)) continue;
-
-      vistas.add(clave);
-      etiquetas.push(etiqueta);
-    }
+    String(crudas)
+      .split(",")
+      .map((etiqueta) => etiqueta.trim())
+      .filter(Boolean)
+      .forEach((etiqueta) => {
+        const clave = this.clave(etiqueta);
+        if (clave && !vistas.has(clave)) {
+          vistas.add(clave);
+          etiquetas.push(etiqueta);
+        }
+      });
 
     return etiquetas;
   },
 
-  imagenIngrediente(nombre) {
-    return `https://www.themealdb.com/images/ingredients/${encodeURIComponent(nombre)}.png`;
+  obtenerImagenIngrediente(nombre) {
+    const limpio = this.texto(nombre);
+    if (!limpio) return "assets/ingrediente-default.svg";
+    return `https://www.themealdb.com/images/ingredients/${encodeURIComponent(limpio)}.png`;
   },
 
-  normalizarCategorias(data) {
-    return (data?.categories ?? [])
-      .map((categoria) => ({
-        id: String(categoria.idCategory ?? ""),
-        nombre: this.texto(categoria.strCategory),
-        imagen: this.texto(categoria.strCategoryThumb),
-        descripcion: this.texto(categoria.strCategoryDescription)
-      }))
-      .filter((categoria) => categoria.nombre);
+  normalizarCompleta(cruda) {
+    const datos = cruda || {};
+    const ingredientes = [];
+
+    for (let i = 1; i <= 20; i += 1) {
+      const nombre = this.texto(datos[`strIngredient${i}`]);
+      if (!nombre) continue;
+
+      const medida = this.texto(datos[`strMeasure${i}`]);
+      ingredientes.push({
+        nombre,
+        medida: medida || "Al gusto",
+        imagen: this.obtenerImagenIngrediente(nombre)
+      });
+    }
+
+    const instrucciones = this.texto(datos.strInstructions);
+    const etiquetas = this.normalizarEtiquetas(datos.strTags);
+
+    return {
+      id: String(datos.idMeal || ""),
+      nombre: this.texto(datos.strMeal) || "Receta sin nombre",
+      imagen: this.texto(datos.strMealThumb),
+      categoria: this.texto(datos.strCategory) || "Sin categoría",
+      origen: this.texto(datos.strArea) || "Desconocido",
+      instrucciones,
+      pasos: this.extraerPasos(instrucciones),
+      cantidadPalabras: instrucciones
+        ? instrucciones.split(/\s+/).filter(Boolean).length
+        : 0,
+      etiquetas,
+      youtube: this.texto(datos.strYoutube) || null,
+      ingredientes,
+      completa: true
+    };
   },
 
-  normalizarOrigenes(data) {
-    return (data?.meals ?? [])
-      .map((origen) => ({ nombre: this.texto(origen.strArea) }))
-      .filter((origen) => origen.nombre);
+  /**
+   * Divide las instrucciones en pasos legibles.
+   * Descarta encabezados como "Step 1" o "Paso 2:" y, si la API devuelve todo
+   * en un único párrafo, separa por marcas de paso o por oraciones.
+   */
+  extraerPasos(textoInstrucciones) {
+    const texto = this.texto(textoInstrucciones);
+    if (!texto) return [];
+
+    let lineas = texto
+      .split(/\r?\n/)
+      .map((linea) => linea.trim())
+      .filter(Boolean);
+
+    if (lineas.length === 1) {
+      const porMarcas = lineas[0]
+        .split(/(?=(?:step|paso)\s*\d+\s*[:.)\-–—])/i)
+        .map((parte) => parte.trim())
+        .filter(Boolean);
+
+      lineas = porMarcas.length > 1 ? porMarcas : this.dividirOraciones(lineas[0]);
+    }
+
+    const soloEncabezado = /^(?:(?:step|paso)\s*)?\d+\s*[:.)\-–—]*$/i;
+    const prefijoPaso = /^(?:(?:step|paso)\s*\d+\s*[:.)\-–—]+|\d+\s*[:.)\-–—]+)\s*/i;
+    const pasos = [];
+
+    lineas.forEach((linea) => {
+      const limpia = linea.replace(prefijoPaso, "").trim();
+      if (!limpia || soloEncabezado.test(limpia)) return;
+      pasos.push(limpia);
+    });
+
+    return pasos;
   },
 
-  normalizarIngredientes(data) {
-    return (data?.meals ?? [])
-      .map((ingrediente) => ({ nombre: this.texto(ingrediente.strIngredient) }))
-      .filter((ingrediente) => ingrediente.nombre);
-  },
+  dividirOraciones(texto) {
+    const oraciones = texto
+      .split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ0-9¿¡])/)
+      .map((oracion) => oracion.trim())
+      .filter(Boolean);
 
-  recetaDesdeRespuesta(data) {
-    const raw = data?.meals?.[0];
-    return raw ? this.normalizarReceta(raw) : null;
-  },
-
-  recetasDesdeRespuesta(data) {
-    return (data?.meals ?? []).map((raw) => this.normalizarReceta(raw));
-  },
-
-  resumenesDesdeRespuesta(data) {
-    return (data?.meals ?? []).map((raw) => this.normalizarResumen(raw));
-  },
-
-  recortarDescripcion(texto, maximo = 120) {
-    const limpio = this.texto(texto);
-    if (limpio.length <= maximo) return limpio;
-    return `${limpio.slice(0, maximo).trimEnd()}…`;
+    return oraciones.length > 1 ? oraciones : [texto];
   }
 };
