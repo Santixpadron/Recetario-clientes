@@ -1,120 +1,201 @@
-# Recetario — Proyecto 2
+# UmamiLab
 
-> **Nombre provisional.** El enunciado exige un nombre original y creativo; reemplazar «Recetario» por la identidad definitiva antes de la entrega.
+**Laboratorio de exploración y comparación gastronómica** construido con HTML5, CSS3 y JavaScript vanilla sobre la API pública de [TheMealDB](https://www.themealdb.com/).
 
-Aplicación web de página única (SPA) para explorar, consultar y comparar recetas usando la API pública [TheMealDB](https://www.themealdb.com/). Proyecto de **Desarrollo de Lenguajes para Clientes Web**.
+El proyecto permite descubrir recetas, filtrarlas por nombre, categoría, origen o ingrediente, consultar su ficha completa y enfrentar dos recetas para saber cuál es más sencilla.
 
-## Estado
+---
 
-Esqueleto inicial. La navegación, el estado global y los servicios base ya están conectados. Las vistas y los componentes tienen su estructura y sus `TODO` para completar por la pareja.
+## Cómo ejecutarlo
 
-## Integrantes
+No necesita servidor, dependencias ni proceso de compilación:
 
-- Santiago Padrón — [@Santixpadron](https://github.com/Santixpadron)
-- [Nombre completo] — [@DaimarPP](https://github.com/DaimarPP)
+1. Abre `index.html` directamente en el navegador (doble clic o arrastrarlo a la ventana).
+2. Espera unos segundos mientras se cargan las primeras recetas desde TheMealDB.
+3. Navega con la barra superior o con los enlaces internos.
 
-## Cómo ejecutar
+> Requiere conexión a internet: todas las recetas e imágenes provienen de `https://www.themealdb.com/api/json/v1/1/`.
 
-1. Clonar el repositorio.
-2. Abrir `index.html` directamente en el navegador. No requiere servidor.
-3. No se usan módulos ES ni dependencias externas.
+---
 
-## Estructura
+## Funcionalidades
+
+- **Inicio:** receta aleatoria destacada, accesos rápidos a categorías y orígenes.
+- **Explorar:** búsqueda combinada por nombre, categoría, origen e ingrediente. Los filtros se ejecutan en paralelo y se cruzan por identificador.
+- **Detalle:** imagen, categoría, origen, etiquetas, ingredientes con medida e imagen, pasos numerados, video opcional y recetas relacionadas.
+- **Categorías y orígenes:** dos pestañas de catálogos, fichas seleccionables, recetas paginadas, estados de carga, error y vacío.
+- **Comparador:** dos paneles A/B con búsqueda de recetas (debounce de 400 ms y `AbortController`), intercambio de paneles, tabla de métricas y veredicto sobre la receta más sencilla.
+
+---
+
+## Estructura del repositorio
 
 ```text
-/
-  index.html
-  /css
-    base.css
-    componentes.css
-    vistas.css
-  /js
-    /util
-      dom.js
-    /servicios
-      api.js
-      cache.js
-      recetas.js
-      comparacion.js
-    /componentes
-      Pseudocomponente.js
-      Aviso.js
-      EstadoCarga.js
-      Modal.js
-      BarraNavegacion.js
-      TarjetaReceta.js
-      Paginador.js
-      FormularioBusqueda.js
-      ListaIngredientes.js
-      PasosPreparacion.js
-      PanelComparador.js
-      TablaComparacion.js
-    /vistas
-      VistaInicio.js
-      VistaExplorar.js
-      VistaDetalle.js
-      VistaCategoriasOrigenes.js
-      VistaComparador.js
-    estado.js
-    app.js
-  /assets
-    icono.svg
-    receta-placeholder.svg
-    ingrediente-placeholder.svg
+umamilab/
+├── index.html
+├── css/
+│   └── styles.css
+├── assets/
+│   └── ingrediente-default.svg
+├── js/
+│   ├── servicios/
+│   │   ├── cache.js
+│   │   ├── api.js
+│   │   ├── recetas.js
+│   │   └── comparacion.js
+│   ├── componentes/
+│   │   ├── EstadoCarga.js
+│   │   ├── BarraNavegacion.js
+│   │   ├── TarjetaReceta.js
+│   │   ├── Paginador.js
+│   │   ├── FormularioBusqueda.js
+│   │   ├── ListaIngredientes.js
+│   │   ├── PasosPreparacion.js
+│   │   ├── PanelComparador.js
+│   │   └── TablaComparacion.js
+│   ├── vistas/
+│   │   ├── VistaInicio.js
+│   │   ├── VistaExplorar.js
+│   │   ├── VistaDetalle.js
+│   │   ├── VistaCategoriasOrigenes.js
+│   │   └── VistaComparador.js
+│   └── app.js
+└── README.md
 ```
 
-## Pseudocomponentes
+Los scripts se cargan con etiquetas `<script>` clásicas, en orden de dependencia. No se usan módulos ES, `import`/`export`, frameworks ni librerías externas.
 
-| Componente | Responsabilidad | Eventos que emite |
-| --- | --- | --- |
-| `BarraNavegacion` | Navegación permanente y contador del comparador. | `nav:ir` |
-| `TarjetaReceta` | Tarjeta reutilizable de receta; soporta estado incompleto y reintento. | `receta:abrir`, `receta:comparar`, `tarjeta:reintentar` |
-| `Paginador` | Paginación en cliente de 12 resultados por página. | `pagina:cambiar` |
-| `FormularioBusqueda` | Criterios combinables de Explorar y validación en línea. | `busqueda:aplicar`, `busqueda:limpiar` |
-| `ListaIngredientes` | Imagen, nombre y medida de cada ingrediente. | — |
-| `PasosPreparacion` | Pasos numerados a partir de `strInstructions`. | — |
-| `PanelComparador` | Panel A/B con buscador interno, debounce y `AbortController`. | `comparador:cambio`, `comparador:vaciar` |
-| `TablaComparacion` | Métricas, resaltado del menor y receta más sencilla. | — |
-| `EstadoCarga` | Estados de carga, vacío y error con reintento. | `estado:reintentar` |
-| `Modal` | Diálogos integrados al DOM (reemplazo de panel, avisos). | `modal:opcion`, `modal:cerrar` |
-| `Aviso` | Mensajes flotantes integrados al DOM. | — |
-| `VistaInicio` | Receta destacada y cuadrícula de categorías. | — |
-| `VistaExplorar` | Búsqueda con filtros combinados, resultados y paginación. | — |
-| `VistaDetalle` | Detalle completo, ingredientes, pasos y relacionadas. | `nav:volver` |
-| `VistaCategoriasOrigenes` | Pestañas de categorías y orígenes con fichas. | — |
-| `VistaComparador` | Composición de los paneles y la tabla de comparación. | `comparador:estado` |
-
-> Las vistas también se implementan como pseudocomponentes: mismo ciclo de vida y `destruir()`.
-
-## `Promise.all` y `Promise.allSettled`
-
-| Dónde | Combinador | Por qué |
-| --- | --- | --- |
-| Inicio: receta destacada + categorías | `allSettled` | Si una sección falla, la otra debe mostrarse igualmente. |
-| Explorar: peticiones de cada criterio | `all` | La intersección necesita todas las respuestas para ser correcta. |
-| Explorar: detalle de las tarjetas de la página visible | `allSettled` | Un fallo individual no debe tumbar el resto de la página. |
-| Detalle: relacionadas por categoría + por origen | `allSettled` | El fallo de una sección no impide mostrar la otra. |
-| Comparador | peticiones individuales | Cada panel busca por su cuenta; la comparación solo se calcula con ambas recetas. |
-
-## Decisiones de diseño (provisionales)
-
-- **Paleta:** paprika (`#c4472d`), oliva (`#6b7f3a`) y crema (`#fbf7f0`). Pendiente de validar con la identidad final.
-- **Tipografías:** Georgia para títulos y la tipografía del sistema para el cuerpo.
-- **Iconografía:** SVG locales en `assets/`; sin kits externos.
-- **Controles:** botones, campos, selectores, pestañas y avisos con estilo propio; estados de `hover` y `:focus-visible`.
+---
 
 ## División del trabajo
 
-| Paquete | Responsable |
+| Integrante | Archivos |
 | --- | --- |
-| Núcleo: `api.js`, `cache.js`, `recetas.js`, `app.js`, `BarraNavegacion`, CSS base | Ambos, en pareja |
-| Búsqueda y resultados: `VistaExplorar`, `FormularioBusqueda`, `Paginador`, `TarjetaReceta`, `VistaCategoriasOrigenes` | A |
-| Contenido y detalle: `VistaInicio`, `VistaDetalle`, `ListaIngredientes`, `PasosPreparacion`, `EstadoCarga` | B |
-| Comparador: `PanelComparador` (A) vs `comparacion.js` + `TablaComparacion` (B); `VistaComparador` en pareja | A y B |
-| README, pruebas y capturas | Ambos |
+| **Integrante 1** | `index.html`, base de `css/styles.css`, `cache.js`, `api.js`, `EstadoCarga`, `BarraNavegacion`, `TarjetaReceta`, `Paginador`, `FormularioBusqueda`, `VistaInicio`, `VistaExplorar` |
+| **Integrante 2** | CSS de detalle y comparador, `assets/ingrediente-default.svg`, `recetas.js`, `comparacion.js`, `ListaIngredientes`, `PasosPreparacion`, `PanelComparador`, `TablaComparacion`, `VistaDetalle`, `VistaCategoriasOrigenes`, `VistaComparador`, `app.js`, `README.md` |
 
-> Completar los nombres definitivos y ajustar el reparto real al historial de commits.
+### Estado de esta entrega
 
-## Capturas de pantalla
+Esta rama contiene la **mitad del Integrante 2 completamente implementada**. Los archivos del Integrante 1 marcados como `PROVISIONAL` son versiones funcionales mínimas que permiten ejecutar y probar la aplicación de extremo a extremo; el Integrante 1 debe reemplazarlos por su implementación definitiva y hacer sus propios commits.
 
-Pendientes. Se agregarán en `capturas/` al cerrar la Fase 4.
+Archivos provisionales:
+
+- `js/servicios/cache.js`
+- `js/servicios/api.js`
+- `js/componentes/EstadoCarga.js`
+- `js/componentes/BarraNavegacion.js`
+- `js/componentes/TarjetaReceta.js`
+- `js/componentes/Paginador.js`
+- `js/componentes/FormularioBusqueda.js`
+- `js/vistas/VistaInicio.js`
+- `js/vistas/VistaExplorar.js`
+
+---
+
+## Servicios
+
+### `ServicioRecetas`
+
+Normaliza las respuestas crudas de TheMealDB:
+
+- `normalizarResumen(cruda)`: modelo ligero para tarjetas.
+- `normalizarCompleta(cruda)`: modelo completo con ingredientes, pasos, etiquetas y metadatos.
+- `extraerPasos(texto)`: divide instrucciones, descarta encabezados como `Step 1` o `Paso 2:` y separa párrafos u oraciones cuando la API devuelve todo en una sola línea.
+- `obtenerImagenIngrediente(nombre)`: construye la URL de la imagen del ingrediente.
+
+### `ServicioComparacion`
+
+Calcula las métricas del comparador ignorando mayúsculas, acentos y espacios sobrantes:
+
+- Cantidad de ingredientes, pasos y palabras.
+- Coincidencia de categoría y origen.
+- Ingredientes comunes y exclusivos.
+- Etiquetas en común.
+- Disponibilidad de video.
+- Porcentaje de similitud.
+- Receta más sencilla y motivo del desempate.
+
+### `ServicioApi`
+
+Única puerta de entrada a la red:
+
+- `peticionCentralizada(endpoint, opciones)`: `fetch` con `AbortController`, validación de `response.ok` y errores tipificados (`SIN_CONEXION`, `SERVICIO_NO_DISPONIBLE`, `ABORTADO`).
+- `buscarPorNombre`, `obtenerRecetaPorId`, `obtenerRecetaAleatoria`.
+- `obtenerCategorias`, `obtenerOrigenes`, `obtenerIngredientes`.
+- `filtrarPorCategoria`, `filtrarPorOrigen`, `filtrarPorIngrediente`.
+
+### `ServicioCache`
+
+Caché en memoria durante la sesión, sin `localStorage` ni `sessionStorage`. Deduplica peticiones simultáneas mediante `pedirUnaVez(clave, productor)`.
+
+---
+
+## Pseudocomponentes y eventos
+
+Cada pseudocomponente es una clase con estado propio, renderizado y `destruir()`. La comunicación se hace con `CustomEvent` que burbujean hasta `document`, donde `app.js` los escucha.
+
+| Pseudocomponente | Responsabilidad | Eventos que emite |
+| --- | --- | --- |
+| `EstadoCarga` | Esqueletos, estados vacíos y errores | `reintentar-accion` |
+| `BarraNavegacion` | Navegación principal y contador del comparador | `navegar-vista` |
+| `TarjetaReceta` | Ficha resumida de receta | `abrir-detalle`, `agregar-comparador` |
+| `Paginador` | Cambio de página | `cambio-pagina` |
+| `FormularioBusqueda` | Filtros combinados | `ejecutar-busqueda`, `limpiar-busqueda` |
+| `ListaIngredientes` | Cuadrícula de ingredientes | — |
+| `PasosPreparacion` | Pasos numerados | — |
+| `PanelComparador` | Panel A/B con búsqueda y sugerencias | `seleccionar-receta-panel`, `vaciar-panel-comparador` |
+| `TablaComparacion` | Tabla de métricas y veredicto | — |
+
+Eventos globales adicionales: `volver-vista-origen`, `abrir-ficha-categoria`, `intercambiar-comparador`.
+
+---
+
+## Decisiones técnicas
+
+- **Sin frameworks ni librerías:** solo APIs nativas del navegador.
+- **Sin módulos ES:** scripts clásicos para que `file://` funcione sin servidor.
+- **Sin `innerHTML` con datos de la API:** todo el contenido dinámico se construye con `document.createElement`, `textContent` y `append`.
+- **Sin persistencia:** el estado vive en memoria y se pierde al recargar.
+- **Sin `alert`, `confirm` ni `prompt`:** los avisos usan una región `aria-live` y el diálogo de reemplazo es un `role="dialog"` propio.
+- **Rutas por hash:** `#/inicio`, `#/explorar`, `#/detalle/:id`, `#/categorias-origenes`, `#/comparador`.
+- **Cancelación de peticiones:** `AbortController` en búsquedas, detalle, paneles y cambio de vista.
+- **`Promise.all`:** filtros combinados de Explorar.
+- **`Promise.allSettled`:** portada de Inicio y recetas relacionadas del Detalle, para tolerar fallos parciales.
+
+---
+
+## Accesibilidad
+
+- Enlace "Saltar al contenido principal" y foco visible en todos los controles.
+- Navegación con `aria-current="page"`.
+- Pestañas con `role="tablist"`, `role="tab"`, `aria-selected` y navegación con flechas, Home y End.
+- Combobox de los paneles con `role="combobox"`, `aria-expanded`, `aria-controls`, `aria-activedescendant` y opciones navegables con flechas, Enter y Escape.
+- Etiquetas asociadas a sus campos con `for`/`id`.
+- Imágenes decorativas con `alt=""`; imágenes informativas con texto alternativo.
+- Diálogo de reemplazo con `role="dialog"`, `aria-modal`, foco atrapado, Escape y restauración del foco.
+- Región `aria-live` para anuncios de estado.
+- Respeto por `prefers-reduced-motion`.
+
+---
+
+## Endpoints utilizados
+
+```text
+search.php?s={nombre}
+lookup.php?i={id}
+random.php
+categories.php
+list.php?a=list
+list.php?i=list
+filter.php?c={categoria}
+filter.php?a={origen}
+filter.php?i={ingrediente}
+```
+
+Todos con la clave pública `1` y la base `https://www.themealdb.com/api/json/v1/1/`.
+
+---
+
+## Créditos
+
+Proyecto académico de la materia **Clientes Web**. Datos e imágenes: [TheMealDB](https://www.themealdb.com/).
