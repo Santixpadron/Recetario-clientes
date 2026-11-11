@@ -1,17 +1,76 @@
 ﻿"use strict";
 
-/* PROVISIONAL: marcador de posición. Se implementa en el siguiente commit. */
+/**
+ * PasosPreparacion — listado numerado de pasos.
+ *
+ * Responsabilidad del Integrante 2.
+ */
 class PasosPreparacion {
-  constructor(contenedor) {
+  constructor(contenedor, props = {}) {
     this.contenedor = contenedor;
-    this.elemento = document.createElement("div");
-    this.elemento.className = "estado-mensaje";
-    this.elemento.textContent = "Componente PasosPreparacion en construcción.";
+    this.props = { pasos: [], ...props };
+    this.destruido = false;
+
+    this.elemento = document.createElement("section");
+    this.elemento.className = "detalle-bloque";
+    this.elemento.setAttribute("aria-labelledby", "titulo-pasos");
+
     if (contenedor) contenedor.appendChild(this.elemento);
+    this.renderizar();
+  }
+
+  actualizar(props = {}) {
+    if (this.destruido) return;
+    this.props = { ...this.props, ...props };
+    this.renderizar();
+  }
+
+  renderizar() {
+    if (this.destruido) return;
+
+    this.elemento.textContent = "";
+    const pasos = Array.isArray(this.props.pasos) ? this.props.pasos : [];
+
+    const titulo = document.createElement("h2");
+    titulo.className = "titulo-seccion";
+    titulo.id = "titulo-pasos";
+    titulo.textContent = `Pasos de preparación (${pasos.length})`;
+    this.elemento.appendChild(titulo);
+
+    if (pasos.length === 0) {
+      const vacio = document.createElement("p");
+      vacio.className = "texto-ayuda";
+      vacio.textContent = "Esta receta no tiene instrucciones registradas.";
+      this.elemento.appendChild(vacio);
+      return;
+    }
+
+    const lista = document.createElement("ol");
+    lista.className = "lista-pasos";
+
+    pasos.forEach((textoPaso, indice) => {
+      const item = document.createElement("li");
+      item.className = "item-paso";
+
+      const numero = document.createElement("span");
+      numero.className = "numero-paso";
+      numero.setAttribute("aria-hidden", "true");
+      numero.textContent = String(indice + 1);
+
+      const parrafo = document.createElement("p");
+      parrafo.textContent = textoPaso;
+
+      item.append(numero, parrafo);
+      lista.appendChild(item);
+    });
+
+    this.elemento.appendChild(lista);
   }
 
   destruir() {
-    if (this.elemento) this.elemento.remove();
+    if (this.destruido) return;
+    this.destruido = true;
+    this.elemento.remove();
     this.elemento = null;
   }
 }
