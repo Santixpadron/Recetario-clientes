@@ -43,10 +43,10 @@ class VistaCategoriasOrigenes {
     this.manejadorReintentar = (evento) => {
       const seccion = evento.detail && evento.detail.seccion;
       if (seccion === "recetas") {
-        this.cargarRecetas();
+        this.cargarRecetas(true);
       } else {
         this.cargarGrupos(true);
-        if (this.estado.seleccionActual) this.cargarRecetas();
+        if (this.estado.seleccionActual) this.cargarRecetas(true);
       }
     };
 
@@ -60,7 +60,7 @@ class VistaCategoriasOrigenes {
     this.renderizar();
     this.cargarGrupos();
 
-    if (this.estado.seleccionActual) this.cargarRecetas();
+    if (this.estado.seleccionActual) this.cargarRecetas(true);
   }
 
   manejarClick(evento) {
@@ -194,7 +194,7 @@ class VistaCategoriasOrigenes {
     }
   }
 
-  async cargarRecetas() {
+  async cargarRecetas(conservarPagina = false) {
     if (this.destruido || !this.estado.seleccionActual) return;
 
     if (this.controladorRecetas) this.controladorRecetas.abort();
@@ -206,7 +206,7 @@ class VistaCategoriasOrigenes {
       cargandoRecetas: true,
       errorRecetas: "",
       recetasGrupo: [],
-      paginaActual: 1
+      paginaActual: conservarPagina ? this.estado.paginaActual : 1
     };
     this.renderizar();
 

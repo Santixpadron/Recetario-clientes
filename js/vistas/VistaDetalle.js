@@ -74,20 +74,21 @@ class VistaDetalle {
     }
 
     if (this.controlador) this.controlador.abort();
-    this.controlador = new AbortController();
+    const controlador = new AbortController();
+    this.controlador = controlador;
 
     this.estado = { ...this.estado, cargando: true, error: "", receta: null };
     this.renderizar();
 
     try {
-      const receta = await ServicioApi.obtenerRecetaPorId(id, this.controlador.signal);
+      const receta = await ServicioApi.obtenerRecetaPorId(id, controlador.signal);
       if (this.destruido) return;
 
       this.estado = { ...this.estado, cargando: false, receta, error: "" };
       this.renderizar();
       document.title = `${receta.nombre} · UmamiLab`;
 
-      await this.cargarRelacionadas(receta);
+      await this.cargarRelacionadas(receta, controlador.signal);
     } catch (error) {
       if (this.destruido || ServicioApi.esCancelacion(error)) return;
 
@@ -100,20 +101,20 @@ class VistaDetalle {
     }
   }
 
-  async cargarRelacionadas(receta) {
+  async cargarRelacionadas(receta, signal) {
     const tareas = [];
 
     if (receta.categoria && receta.categoria !== "Sin categoría") {
-      tareas.push(ServicioApi.filtrarPorCategoria(receta.categoria, this.controlador.signal));
+      tareas.push(ServicioApi.filtrarPorCategoria(receta.categoria, signal));
     }
     if (receta.origen && receta.origen !== "Desconocido") {
-      tareas.push(ServicioApi.filtrarPorOrigen(receta.origen, this.controlador.signal));
+      tareas.push(ServicioApi.filtrarPorOrigen(receta.origen, signal));
     }
 
     if (tareas.length === 0 || this.destruido) return;
 
     const resultados = await Promise.allSettled(tareas);
-    if (this.destruido) return;
+    if (this.destruido || signal.aborted) return;
 
     const vistos = new Set([receta.id]);
     const relacionadas = [];
