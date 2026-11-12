@@ -77,22 +77,20 @@ Los scripts se cargan con etiquetas `<script>` clásicas, en orden de dependenci
 | **Integrante 1** | `index.html`, base de `css/styles.css`, `cache.js`, `api.js`, `EstadoCarga`, `BarraNavegacion`, `TarjetaReceta`, `Paginador`, `FormularioBusqueda`, `VistaInicio`, `VistaExplorar` |
 | **Integrante 2** | CSS de detalle y comparador, `assets/ingrediente-default.svg`, `recetas.js`, `comparacion.js`, `ListaIngredientes`, `PasosPreparacion`, `PanelComparador`, `TablaComparacion`, `VistaDetalle`, `VistaCategoriasOrigenes`, `VistaComparador`, `app.js`, `README.md` |
 
-### Estado de esta entrega
+### Estado actual de `main`
 
-La rama `main` integra las dos mitades del proyecto:
+`main` ya integra las dos mitades del proyecto:
 
 - **Integrante 1 (Neil_togandi):** `index.html`, la base de `css/styles.css`, `js/servicios/api.js`, `js/servicios/cache.js`, `js/componentes/EstadoCarga.js` y `js/componentes/BarraNavegacion.js`.
 - **Integrante 2 (Santixpadron):** el resto de `css/styles.css`, `assets/ingrediente-default.svg`, `js/servicios/recetas.js`, `js/servicios/comparacion.js`, `ListaIngredientes`, `PasosPreparacion`, `PanelComparador`, `TablaComparacion`, `VistaDetalle`, `VistaCategoriasOrigenes`, `VistaComparador`, `js/app.js` y este README.
 
-Siguen siendo versiones provisionales del Integrante 2, a la espera de que Neil_togandi las reemplace por las suyas:
+Estos cinco archivos siguen siendo versiones provisionales escritas por el Integrante 2 para poder probar la aplicación completa; deben ser reemplazados por la implementación definitiva de Neil_togandi y no deben acreditarse como trabajo suyo:
 
 - `js/componentes/TarjetaReceta.js`
 - `js/componentes/Paginador.js`
 - `js/componentes/FormularioBusqueda.js`
 - `js/vistas/VistaInicio.js`
 - `js/vistas/VistaExplorar.js`
-
-Estas versiones provisionales permiten ejecutar y probar la aplicación completa de extremo a extremo, pero no se presentan como trabajo del Integrante 1.
 
 ---
 
