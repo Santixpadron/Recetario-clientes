@@ -121,7 +121,12 @@ class AplicacionUmamiLab {
     const hash = this.construirHash(nombre, parametros);
 
     if (window.location.hash === hash) {
-      this.mostrarVista(nombre, parametros);
+      const requiereReseleccion =
+        nombre === "categorias-origenes" && Boolean(parametros.categoriaPreseleccionada);
+
+      if (this.nombreVista !== nombre || requiereReseleccion) {
+        this.mostrarVista(nombre, parametros);
+      }
       return;
     }
 
