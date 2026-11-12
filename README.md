@@ -79,18 +79,12 @@ Los scripts se cargan con etiquetas `<script>` clásicas, en orden de dependenci
 
 ### Estado actual de `main`
 
-`main` ya integra las dos mitades del proyecto:
+`main` integra las dos mitades del proyecto y es la rama de entrega:
 
-- **Integrante 1 (Neil_togandi):** `index.html`, la base de `css/styles.css`, `js/servicios/api.js`, `js/servicios/cache.js`, `js/componentes/EstadoCarga.js` y `js/componentes/BarraNavegacion.js`.
+- **Integrante 1 (Neil_togandi):** `index.html`, la base de `css/styles.css`, `js/servicios/api.js`, `js/servicios/cache.js`, `EstadoCarga`, `BarraNavegacion`, `TarjetaReceta`, `Paginador`, `FormularioBusqueda`, `VistaInicio` y `VistaExplorar`.
 - **Integrante 2 (Santixpadron):** el resto de `css/styles.css`, `assets/ingrediente-default.svg`, `js/servicios/recetas.js`, `js/servicios/comparacion.js`, `ListaIngredientes`, `PasosPreparacion`, `PanelComparador`, `TablaComparacion`, `VistaDetalle`, `VistaCategoriasOrigenes`, `VistaComparador`, `js/app.js` y este README.
 
-Estos cinco archivos siguen siendo versiones provisionales escritas por el Integrante 2 para poder probar la aplicación completa; deben ser reemplazados por la implementación definitiva de Neil_togandi y no deben acreditarse como trabajo suyo:
-
-- `js/componentes/TarjetaReceta.js`
-- `js/componentes/Paginador.js`
-- `js/componentes/FormularioBusqueda.js`
-- `js/vistas/VistaInicio.js`
-- `js/vistas/VistaExplorar.js`
+Las cinco piezas que antes eran provisionales (`TarjetaReceta`, `Paginador`, `FormularioBusqueda`, `VistaInicio` y `VistaExplorar`) ya fueron reemplazadas por la implementación definitiva del Integrante 1 e integradas en `main`.
 
 ---
 
@@ -141,7 +135,7 @@ Cada pseudocomponente es una clase con estado propio, renderizado y `destruir()`
 | --- | --- | --- |
 | `EstadoCarga` | Esqueletos, estados vacíos y errores | `reintentar-accion` |
 | `BarraNavegacion` | Navegación principal y contador del comparador | `navegar-vista` |
-| `TarjetaReceta` | Ficha resumida de receta | `abrir-detalle`, `agregar-comparador` |
+| `TarjetaReceta` | Ficha resumida de receta | `abrir-detalle`, `agregar-comparador`, `reintentar-tarjeta` |
 | `Paginador` | Cambio de página | `cambio-pagina` |
 | `FormularioBusqueda` | Filtros combinados | `ejecutar-busqueda`, `limpiar-busqueda` |
 | `ListaIngredientes` | Cuadrícula de ingredientes | — |
@@ -174,6 +168,7 @@ Eventos globales adicionales: `volver-vista-origen`, `abrir-ficha-categoria`, `i
 - Pestañas con `role="tablist"`, `role="tab"`, `aria-selected` y navegación con flechas, Home y End.
 - Combobox de los paneles con `role="combobox"`, `aria-expanded`, `aria-controls`, `aria-activedescendant` y opciones navegables con flechas, Enter y Escape.
 - Etiquetas asociadas a sus campos con `for`/`id`.
+- Tarjetas de categoría enfocables y activables con Enter o Espacio.
 - Imágenes decorativas con `alt=""`; imágenes informativas con texto alternativo.
 - Diálogo de reemplazo con `role="dialog"`, `aria-modal`, foco atrapado, Escape y restauración del foco.
 - Región `aria-live` para anuncios de estado.
