@@ -69,6 +69,9 @@ Los scripts se cargan con etiquetas `<script>` clásicas, en orden de dependenci
 
 ## División del trabajo
 
+- **Integrante 1:** Neil_togandi
+- **Integrante 2:** Santixpadron
+
 | Integrante | Archivos |
 | --- | --- |
 | **Integrante 1** | `index.html`, base de `css/styles.css`, `cache.js`, `api.js`, `EstadoCarga`, `BarraNavegacion`, `TarjetaReceta`, `Paginador`, `FormularioBusqueda`, `VistaInicio`, `VistaExplorar` |
@@ -76,7 +79,7 @@ Los scripts se cargan con etiquetas `<script>` clásicas, en orden de dependenci
 
 ### Estado de esta entrega
 
-Esta rama contiene la **mitad del Integrante 2 completamente implementada**. Los archivos del Integrante 1 marcados como `PROVISIONAL` son versiones funcionales mínimas que permiten ejecutar y probar la aplicación de extremo a extremo; el Integrante 1 debe reemplazarlos por su implementación definitiva y hacer sus propios commits.
+Esta rama contiene la **mitad del Integrante 2 completamente implementada**. Los archivos del Integrante 1 marcados como `PROVISIONAL` son versiones funcionales mínimas que permiten ejecutar y probar la aplicación de extremo a extremo; Neil_togandi debe reemplazarlos por su implementación definitiva y hacer sus propios commits.
 
 Archivos provisionales:
 
