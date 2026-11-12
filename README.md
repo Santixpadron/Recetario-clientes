@@ -31,7 +31,7 @@ No necesita servidor, dependencias ni proceso de compilación:
 ## Estructura del repositorio
 
 ```text
-umamilab/
+Recetario-clientes/
 ├── index.html
 ├── css/
 │   └── styles.css
@@ -79,19 +79,20 @@ Los scripts se cargan con etiquetas `<script>` clásicas, en orden de dependenci
 
 ### Estado de esta entrega
 
-Esta rama contiene la **mitad del Integrante 2 completamente implementada**. Los archivos del Integrante 1 marcados como `PROVISIONAL` son versiones funcionales mínimas que permiten ejecutar y probar la aplicación de extremo a extremo; Neil_togandi debe reemplazarlos por su implementación definitiva y hacer sus propios commits.
+La rama `main` integra las dos mitades del proyecto:
 
-Archivos provisionales:
+- **Integrante 1 (Neil_togandi):** `index.html`, la base de `css/styles.css`, `js/servicios/api.js`, `js/servicios/cache.js`, `js/componentes/EstadoCarga.js` y `js/componentes/BarraNavegacion.js`.
+- **Integrante 2 (Santixpadron):** el resto de `css/styles.css`, `assets/ingrediente-default.svg`, `js/servicios/recetas.js`, `js/servicios/comparacion.js`, `ListaIngredientes`, `PasosPreparacion`, `PanelComparador`, `TablaComparacion`, `VistaDetalle`, `VistaCategoriasOrigenes`, `VistaComparador`, `js/app.js` y este README.
 
-- `js/servicios/cache.js`
-- `js/servicios/api.js`
-- `js/componentes/EstadoCarga.js`
-- `js/componentes/BarraNavegacion.js`
+Siguen siendo versiones provisionales del Integrante 2, a la espera de que Neil_togandi las reemplace por las suyas:
+
 - `js/componentes/TarjetaReceta.js`
 - `js/componentes/Paginador.js`
 - `js/componentes/FormularioBusqueda.js`
 - `js/vistas/VistaInicio.js`
 - `js/vistas/VistaExplorar.js`
+
+Estas versiones provisionales permiten ejecutar y probar la aplicación completa de extremo a extremo, pero no se presentan como trabajo del Integrante 1.
 
 ---
 
@@ -123,13 +124,14 @@ Calcula las métricas del comparador ignorando mayúsculas, acentos y espacios s
 Única puerta de entrada a la red:
 
 - `peticionCentralizada(endpoint, opciones)`: `fetch` con `AbortController`, validación de `response.ok` y errores tipificados (`SIN_CONEXION`, `SERVICIO_NO_DISPONIBLE`, `ABORTADO`).
+- `esCancelacion(error)`: indica si un error proviene de una petición abortada.
 - `buscarPorNombre`, `obtenerRecetaPorId`, `obtenerRecetaAleatoria`.
 - `obtenerCategorias`, `obtenerOrigenes`, `obtenerIngredientes`.
 - `filtrarPorCategoria`, `filtrarPorOrigen`, `filtrarPorIngrediente`.
 
 ### `ServicioCache`
 
-Caché en memoria durante la sesión, sin `localStorage` ni `sessionStorage`. Deduplica peticiones simultáneas mediante `pedirUnaVez(clave, productor)`.
+Caché en memoria durante la sesión, sin `localStorage` ni `sessionStorage`. Guarda recetas completas, categorías, orígenes e ingredientes para evitar peticiones repetidas.
 
 ---
 

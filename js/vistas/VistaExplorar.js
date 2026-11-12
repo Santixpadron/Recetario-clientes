@@ -188,9 +188,8 @@ class VistaExplorar {
     if (this.estado.cargando) {
       this.hijos.push(
         new EstadoCarga(this.zonaResultados, {
-          tipo: "tarjetas",
-          cantidad: 6,
-          seccion: "explorar"
+          forma: "tarjetas",
+          cantidad: 6
         })
       );
       return;
@@ -199,10 +198,10 @@ class VistaExplorar {
     if (this.estado.error) {
       this.hijos.push(
         new EstadoCarga(this.zonaResultados, {
-          error: true,
+          modo: "error",
           titulo: "No se pudo buscar",
           mensaje: this.estado.error,
-          seccion: "explorar"
+          mostrarReintentar: true
         })
       );
       return;
@@ -211,6 +210,7 @@ class VistaExplorar {
     if (!this.estado.busquedaHecha) {
       this.hijos.push(
         new EstadoCarga(this.zonaResultados, {
+          modo: "vacio",
           titulo: "Empieza a explorar",
           mensaje: "Escribe un nombre, elige una categoría u origen, o busca por ingrediente."
         })
@@ -221,6 +221,7 @@ class VistaExplorar {
     if (this.estado.resultados.length === 0) {
       this.hijos.push(
         new EstadoCarga(this.zonaResultados, {
+          modo: "vacio",
           titulo: "Sin recetas para esa combinación",
           mensaje: "Prueba quitando algún filtro o usando términos más generales."
         })

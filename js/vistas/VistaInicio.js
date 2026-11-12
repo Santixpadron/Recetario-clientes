@@ -144,7 +144,7 @@ class VistaInicio {
 
     if (this.estado.cargando) {
       this.hijos.push(
-        new EstadoCarga(this.elemento, { tipo: "tarjetas", cantidad: 3, seccion: "inicio" })
+        new EstadoCarga(this.elemento, { forma: "tarjetas", cantidad: 3 })
       );
       return;
     }
@@ -152,10 +152,10 @@ class VistaInicio {
     if (this.estado.error) {
       this.hijos.push(
         new EstadoCarga(this.elemento, {
-          error: true,
+          modo: "error",
           titulo: "No se pudo cargar la portada",
           mensaje: this.estado.error,
-          seccion: "inicio"
+          mostrarReintentar: true
         })
       );
       return;

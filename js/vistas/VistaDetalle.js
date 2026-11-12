@@ -146,17 +146,17 @@ class VistaDetalle {
     this.elemento.appendChild(volver);
 
     if (this.estado.cargando) {
-      this.hijos.push(new EstadoCarga(this.elemento, { tipo: "detalle", seccion: "detalle" }));
+      this.hijos.push(new EstadoCarga(this.elemento, { forma: "detalle" }));
       return;
     }
 
     if (this.estado.error) {
       this.hijos.push(
         new EstadoCarga(this.elemento, {
-          error: true,
+          modo: "error",
           titulo: "No se pudo cargar la receta",
           mensaje: this.estado.error,
-          seccion: "detalle"
+          mostrarReintentar: true
         })
       );
       return;

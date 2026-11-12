@@ -40,14 +40,11 @@ class VistaCategoriasOrigenes {
       this.estado.paginaActual = pagina;
       this.renderizar();
     };
-    this.manejadorReintentar = (evento) => {
-      const seccion = evento.detail && evento.detail.seccion;
-      if (seccion === "recetas") {
-        this.cargarRecetas(true);
-      } else {
+    this.manejadorReintentar = () => {
+      if (this.estado.errorGrupos || this.estado.grupos.length === 0) {
         this.cargarGrupos(true);
-        if (this.estado.seleccionActual) this.cargarRecetas(true);
       }
+      if (this.estado.seleccionActual) this.cargarRecetas(true);
     };
 
     this.elemento.addEventListener("click", this.manejadorClick);
@@ -305,9 +302,8 @@ class VistaCategoriasOrigenes {
     if (this.estado.cargandoGrupos) {
       this.hijos.push(
         new EstadoCarga(panel, {
-          tipo: "tarjetas",
-          cantidad: 6,
-          seccion: "grupos"
+          forma: "tarjetas",
+          cantidad: 6
         })
       );
       return panel;
@@ -316,10 +312,10 @@ class VistaCategoriasOrigenes {
     if (this.estado.errorGrupos) {
       this.hijos.push(
         new EstadoCarga(panel, {
-          error: true,
+          modo: "error",
           titulo: "No se pudieron cargar los catálogos",
           mensaje: this.estado.errorGrupos,
-          seccion: "grupos"
+          mostrarReintentar: true
         })
       );
       return panel;
@@ -328,6 +324,7 @@ class VistaCategoriasOrigenes {
     if (this.estado.grupos.length === 0) {
       this.hijos.push(
         new EstadoCarga(panel, {
+          modo: "vacio",
           titulo: "Sin grupos disponibles",
           mensaje: "TheMealDB no devolvió elementos para esta pestaña."
         })
@@ -399,7 +396,7 @@ class VistaCategoriasOrigenes {
 
     if (this.estado.cargandoRecetas) {
       this.hijos.push(
-        new EstadoCarga(seccion, { tipo: "tarjetas", cantidad: 6, seccion: "recetas" })
+        new EstadoCarga(seccion, { forma: "tarjetas", cantidad: 6 })
       );
       return seccion;
     }
@@ -407,10 +404,10 @@ class VistaCategoriasOrigenes {
     if (this.estado.errorRecetas) {
       this.hijos.push(
         new EstadoCarga(seccion, {
-          error: true,
+          modo: "error",
           titulo: "No se pudieron cargar las recetas",
           mensaje: this.estado.errorRecetas,
-          seccion: "recetas"
+          mostrarReintentar: true
         })
       );
       return seccion;
@@ -419,6 +416,7 @@ class VistaCategoriasOrigenes {
     if (this.estado.recetasGrupo.length === 0) {
       this.hijos.push(
         new EstadoCarga(seccion, {
+          modo: "vacio",
           titulo: "Este grupo no tiene recetas",
           mensaje: `TheMealDB no devolvió recetas para ${this.estado.seleccionActual}. Prueba con otro grupo.`
         })

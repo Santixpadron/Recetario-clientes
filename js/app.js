@@ -28,8 +28,8 @@ class AplicacionUmamiLab {
     this.manejadorTecladoDialogo = null;
 
     this.barra = new BarraNavegacion(this.contenedorNavegacion, {
-      vistaActual: "inicio",
-      contadorComparador: 0
+      vistaActiva: "inicio",
+      cantidadComparador: 0
     });
 
     this.registrarEventos();
@@ -176,9 +176,9 @@ class AplicacionUmamiLab {
     this.parametrosVista = parametros;
     this.contenedorVista.textContent = "";
 
-    this.barra.actualizar({
-      vistaActual: nombre,
-      contadorComparador: this.contadorComparador()
+    this.barra.actualizarEstado({
+      vistaActiva: nombre,
+      cantidadComparador: this.contadorComparador()
     });
 
     if (nombre === "inicio") {
@@ -324,9 +324,9 @@ class AplicacionUmamiLab {
   }
 
   actualizarVistaComparador() {
-    this.barra.actualizar({
-      vistaActual: this.nombreVista,
-      contadorComparador: this.contadorComparador()
+    this.barra.actualizarEstado({
+      vistaActiva: this.nombreVista,
+      cantidadComparador: this.contadorComparador()
     });
 
     if (this.nombreVista === "comparador" && this.vistaActual) {

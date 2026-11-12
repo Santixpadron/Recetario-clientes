@@ -1,95 +1,105 @@
-﻿"use strict";
-
-/**
- * BarraNavegacion — enlaces principales de la SPA.
- *
- * PROVISIONAL — archivo asignado al Integrante 1.
- * Emite `navegar-vista` con `{ vista }` y marca el enlace activo con
- * `aria-current="page"`.
- */
 class BarraNavegacion {
   constructor(contenedor, props = {}) {
     this.contenedor = contenedor;
-    this.props = { vistaActual: "inicio", contadorComparador: 0, ...props };
-    this.destruido = false;
-
-    this.enlaces = [
-      { vista: "inicio", texto: "Inicio" },
-      { vista: "explorar", texto: "Explorar" },
-      { vista: "categorias-origenes", texto: "Categorías y orígenes" },
-      { vista: "comparador", texto: "Comparador" }
-    ];
-
-    this.elemento = document.createElement("nav");
-    this.elemento.className = "barra-navegacion";
-    this.elemento.setAttribute("aria-label", "Navegación principal");
-
-    this.manejadorClick = (evento) => {
-      const enlace = evento.target.closest("a[data-vista]");
-      if (!enlace) return;
-      evento.preventDefault();
-      this.elemento.dispatchEvent(
-        new CustomEvent("navegar-vista", {
-          bubbles: true,
-          detail: { vista: enlace.dataset.vista }
-        })
-      );
+    this.estado = {
+      vistaActiva: props.vistaActiva || 'inicio',
+      cantidadComparador: props.cantidadComparador || 0
     };
-
-    this.elemento.addEventListener("click", this.manejadorClick);
-    if (contenedor) contenedor.appendChild(this.elemento);
-
+    this.elemento = null;
+    this.manejadorClick = null;
+    this.crearElemento();
     this.renderizar();
+    this.configurarEventos();
   }
 
-  actualizar(props = {}) {
-    if (this.destruido) return;
-    this.props = { ...this.props, ...props };
+  crearElemento() {
+    this.elemento = document.createElement('nav');
+    this.elemento.className = 'barra-nav';
+    this.elemento.setAttribute('aria-label', 'Navegación principal');
+    this.contenedor.appendChild(this.elemento);
+  }
+
+  actualizarEstado(nuevoEstado) {
+    this.estado = { ...this.estado, ...nuevoEstado };
     this.renderizar();
   }
 
   renderizar() {
-    if (this.destruido) return;
-    this.elemento.textContent = "";
+    this.elemento.textContent = '';
 
-    const lista = document.createElement("ul");
-    lista.className = "nav-lista";
+    const botonLogo = document.createElement('button');
+    botonLogo.type = 'button';
+    botonLogo.className = 'marca-logo';
+    botonLogo.dataset.vista = 'inicio';
 
-    this.enlaces.forEach(({ vista, texto }) => {
-      const item = document.createElement("li");
-      const enlace = document.createElement("a");
-      enlace.className = "nav-enlace";
-      enlace.href = `#/${vista}`;
-      enlace.dataset.vista = vista;
-      enlace.textContent = texto;
+    const textoLogo = document.createElement('span');
+    textoLogo.textContent = 'UmamiLab';
+    const subLogo = document.createElement('span');
+    subLogo.className = 'marca-subtitulo';
+    subLogo.textContent = 'TheMealDB';
 
-      if (vista === this.props.vistaActual) {
-        enlace.setAttribute("aria-current", "page");
+    botonLogo.appendChild(textoLogo);
+    botonLogo.appendChild(subLogo);
+
+    const lista = document.createElement('ul');
+    lista.className = 'nav-lista';
+
+    const items = [
+      { id: 'inicio', texto: 'Inicio' },
+      { id: 'explorar', texto: 'Explorar' },
+      { id: 'categorias-origenes', texto: 'Categorías y orígenes' },
+      { id: 'comparador', texto: 'Comparador', conContador: true }
+    ];
+
+    items.forEach((item) => {
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.dataset.vista = item.id;
+      btn.className = `nav-boton ${this.estado.vistaActiva === item.id ? 'activo' : ''}`;
+      if (this.estado.vistaActiva === item.id) {
+        btn.setAttribute('aria-current', 'page');
       }
 
-      if (vista === "comparador" && this.props.contadorComparador > 0) {
-        const contador = document.createElement("span");
-        contador.className = "nav-contador";
-        contador.textContent = String(this.props.contadorComparador);
-        contador.setAttribute(
-          "aria-label",
-          `${this.props.contadorComparador} recetas en el comparador`
-        );
-        enlace.appendChild(contador);
+      const spanTexto = document.createElement('span');
+      spanTexto.textContent = item.texto;
+      btn.appendChild(spanTexto);
+
+      if (item.conContador) {
+        const badge = document.createElement('span');
+        badge.className = 'insignia-comparador';
+        badge.textContent = `${this.estado.cantidadComparador}/2`;
+        btn.appendChild(badge);
       }
 
-      item.appendChild(enlace);
-      lista.appendChild(item);
+      li.appendChild(btn);
+      lista.appendChild(li);
     });
 
+    this.elemento.appendChild(botonLogo);
     this.elemento.appendChild(lista);
   }
 
+  configurarEventos() {
+    this.manejadorClick = (e) => {
+      const boton = e.target.closest('[data-vista]');
+      if (!boton) return;
+      const destino = boton.dataset.vista;
+      this.elemento.dispatchEvent(
+        new CustomEvent('navegar-vista', {
+          bubbles: true,
+          detail: { vista: destino }
+        })
+      );
+    };
+    this.elemento.addEventListener('click', this.manejadorClick);
+  }
+
   destruir() {
-    if (this.destruido) return;
-    this.destruido = true;
-    this.elemento.removeEventListener("click", this.manejadorClick);
-    this.elemento.remove();
-    this.elemento = null;
+    if (this.elemento) {
+      this.elemento.removeEventListener('click', this.manejadorClick);
+      this.elemento.remove();
+      this.elemento = null;
+    }
   }
 }
