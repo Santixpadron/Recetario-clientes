@@ -201,6 +201,7 @@
       card.className = 'tarjeta-categoria';
       card.style.cursor = 'pointer';
       card.tabIndex = 0;
+      card.setAttribute('role', 'button');
       card.dataset.categoriaNombre = cat.nombre;
 
       const img = document.createElement('img');
@@ -285,6 +286,19 @@
       }
     };
 
+    this.manejadorKeydown = (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const cardCategoria = e.target.closest('[data-categoria-nombre]');
+      if (!cardCategoria) return;
+      e.preventDefault();
+      this.elemento.dispatchEvent(
+        new CustomEvent('abrir-ficha-categoria', {
+          bubbles: true,
+          detail: { categoria: cardCategoria.dataset.categoriaNombre }
+        })
+      );
+    };
+
     this.manejadorReintentar = async (e) => {
       const contenedorSeccion = e.target.closest('[data-seccion-reintento]');
       if (!contenedorSeccion) return;
@@ -314,6 +328,7 @@
     };
 
     this.elemento.addEventListener('click', this.manejadorClick);
+    this.elemento.addEventListener('keydown', this.manejadorKeydown);
     this.elemento.addEventListener('reintentar-accion', this.manejadorReintentar);
   }
 
@@ -323,6 +338,7 @@
     this.componentesHijos = [];
     if (this.elemento) {
       this.elemento.removeEventListener('click', this.manejadorClick);
+      this.elemento.removeEventListener('keydown', this.manejadorKeydown);
       this.elemento.removeEventListener('reintentar-accion', this.manejadorReintentar);
       this.elemento.remove();
       this.elemento = null;

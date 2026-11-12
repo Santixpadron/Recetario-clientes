@@ -14,6 +14,8 @@
       sugerenciasIngrediente: [],
       errorValidacion: ''
     };
+    FormularioBusqueda.contador = (FormularioBusqueda.contador || 0) + 1;
+    this.idBase = `filtro-${FormularioBusqueda.contador}`;
     this.elemento = null;
     this.crearElemento();
     this.renderizar();
@@ -39,8 +41,10 @@
     const lblNombre = document.createElement('label');
     lblNombre.className = 'etiqueta-campo';
     lblNombre.textContent = 'Nombre de receta';
+    lblNombre.htmlFor = `${this.idBase}-nombre`;
     const inputNombre = document.createElement('input');
     inputNombre.type = 'text';
+    inputNombre.id = `${this.idBase}-nombre`;
     inputNombre.name = 'nombre';
     inputNombre.className = 'campo-control';
     inputNombre.placeholder = 'Ej. Arrabiata, Tacos...';
@@ -54,7 +58,9 @@
     const lblCat = document.createElement('label');
     lblCat.className = 'etiqueta-campo';
     lblCat.textContent = 'Categoría';
+    lblCat.htmlFor = `${this.idBase}-categoria`;
     const selectCat = document.createElement('select');
+    selectCat.id = `${this.idBase}-categoria`;
     selectCat.name = 'categoria';
     selectCat.className = 'selector-control';
     const optCatTodas = document.createElement('option');
@@ -77,7 +83,9 @@
     const lblOri = document.createElement('label');
     lblOri.className = 'etiqueta-campo';
     lblOri.textContent = 'Origen (Cocina)';
+    lblOri.htmlFor = `${this.idBase}-origen`;
     const selectOri = document.createElement('select');
+    selectOri.id = `${this.idBase}-origen`;
     selectOri.name = 'origen';
     selectOri.className = 'selector-control';
     const optOriTodos = document.createElement('option');
@@ -100,8 +108,10 @@
     const lblIng = document.createElement('label');
     lblIng.className = 'etiqueta-campo';
     lblIng.textContent = 'Ingrediente';
+    lblIng.htmlFor = `${this.idBase}-ingrediente`;
     const inputIng = document.createElement('input');
     inputIng.type = 'text';
+    inputIng.id = `${this.idBase}-ingrediente`;
     inputIng.name = 'ingrediente';
     inputIng.autocomplete = 'off';
     inputIng.className = 'campo-control';
@@ -125,6 +135,7 @@
     // Mensaje de validación
     const msgError = document.createElement('p');
     msgError.className = 'mensaje-validacion';
+    msgError.setAttribute('role', 'alert');
     msgError.textContent = this.estado.errorValidacion;
     this.elemento.appendChild(msgError);
 
