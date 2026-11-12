@@ -11,6 +11,7 @@ class ListaIngredientes {
   constructor(contenedor, props = {}) {
     this.contenedor = contenedor;
     this.props = { ingredientes: [], ...props };
+    this.estado = { ingredientes: Array.isArray(this.props.ingredientes) ? this.props.ingredientes : [] };
     this.destruido = false;
 
     this.elemento = document.createElement("section");
@@ -24,6 +25,10 @@ class ListaIngredientes {
   actualizar(props = {}) {
     if (this.destruido) return;
     this.props = { ...this.props, ...props };
+    this.estado = {
+      ...this.estado,
+      ...(Array.isArray(this.props.ingredientes) ? { ingredientes: this.props.ingredientes } : {})
+    };
     this.renderizar();
   }
 
@@ -31,8 +36,8 @@ class ListaIngredientes {
     if (this.destruido) return;
 
     this.elemento.textContent = "";
-    const ingredientes = Array.isArray(this.props.ingredientes)
-      ? this.props.ingredientes
+    const ingredientes = Array.isArray(this.estado.ingredientes)
+      ? this.estado.ingredientes
       : [];
 
     const titulo = document.createElement("h2");

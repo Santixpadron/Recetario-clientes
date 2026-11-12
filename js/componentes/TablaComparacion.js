@@ -10,6 +10,7 @@ class TablaComparacion {
   constructor(contenedor, props = {}) {
     this.contenedor = contenedor;
     this.props = { recetaA: null, recetaB: null, ...props };
+    this.estado = { recetaA: this.props.recetaA || null, recetaB: this.props.recetaB || null };
     this.destruido = false;
 
     this.elemento = document.createElement("div");
@@ -22,6 +23,10 @@ class TablaComparacion {
   actualizar(props = {}) {
     if (this.destruido) return;
     this.props = { ...this.props, ...props };
+    this.estado = {
+      recetaA: this.props.recetaA || null,
+      recetaB: this.props.recetaB || null
+    };
     this.renderizar();
   }
 
@@ -29,7 +34,7 @@ class TablaComparacion {
     if (this.destruido) return;
 
     this.elemento.textContent = "";
-    const { recetaA, recetaB } = this.props;
+    const { recetaA, recetaB } = this.estado;
 
     if (!recetaA || !recetaB) {
       const vacio = document.createElement("div");
@@ -88,11 +93,11 @@ class TablaComparacion {
 
     const thA = document.createElement("th");
     thA.scope = "col";
-    thA.textContent = `A · ${this.props.recetaA.nombre}`;
+    thA.textContent = `A · ${this.estado.recetaA.nombre}`;
 
     const thB = document.createElement("th");
     thB.scope = "col";
-    thB.textContent = `B · ${this.props.recetaB.nombre}`;
+    thB.textContent = `B · ${this.estado.recetaB.nombre}`;
 
     filaCabecera.append(thMetrica, thA, thB);
     thead.appendChild(filaCabecera);
@@ -255,7 +260,7 @@ class TablaComparacion {
       texto.textContent = `${metricas.motivoSencilla} Comparten ${metricas.ingredientesComunes.length} ingredientes (${metricas.similitud} % de similitud).`;
     } else {
       const ganadora =
-        metricas.masSencilla === "A" ? this.props.recetaA.nombre : this.props.recetaB.nombre;
+        metricas.masSencilla === "A" ? this.estado.recetaA.nombre : this.estado.recetaB.nombre;
       titulo.textContent = `La receta más sencilla es ${ganadora}`;
       texto.textContent = `${metricas.motivoSencilla} Comparten ${metricas.ingredientesComunes.length} ingredientes (${metricas.similitud} % de similitud).`;
     }

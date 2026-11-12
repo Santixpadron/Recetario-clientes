@@ -9,6 +9,7 @@ class PasosPreparacion {
   constructor(contenedor, props = {}) {
     this.contenedor = contenedor;
     this.props = { pasos: [], ...props };
+    this.estado = { pasos: Array.isArray(this.props.pasos) ? this.props.pasos : [] };
     this.destruido = false;
 
     this.elemento = document.createElement("section");
@@ -22,6 +23,10 @@ class PasosPreparacion {
   actualizar(props = {}) {
     if (this.destruido) return;
     this.props = { ...this.props, ...props };
+    this.estado = {
+      ...this.estado,
+      ...(Array.isArray(this.props.pasos) ? { pasos: this.props.pasos } : {})
+    };
     this.renderizar();
   }
 
@@ -29,7 +34,7 @@ class PasosPreparacion {
     if (this.destruido) return;
 
     this.elemento.textContent = "";
-    const pasos = Array.isArray(this.props.pasos) ? this.props.pasos : [];
+    const pasos = Array.isArray(this.estado.pasos) ? this.estado.pasos : [];
 
     const titulo = document.createElement("h2");
     titulo.className = "titulo-seccion";
