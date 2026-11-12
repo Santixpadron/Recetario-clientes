@@ -1,225 +1,263 @@
-﻿"use strict";
-
-/**
- * FormularioBusqueda — filtros combinados de Explorar.
- *
- * PROVISIONAL — archivo asignado al Integrante 1.
- * Emite `ejecutar-busqueda` con `{ nombre, categoria, origen, ingrediente }`
- * y `limpiar-busqueda`.
- */
-class FormularioBusqueda {
+﻿class FormularioBusqueda {
   constructor(contenedor, props = {}) {
     this.contenedor = contenedor;
-    this.props = { criterios: {}, ...props };
-    this.destruido = false;
+    this.estado = {
+      categorias: props.categorias || [],
+      origenes: props.origenes || [],
+      ingredientes: props.ingredientes || [],
+      criterios: {
+        nombre: (props.criteriosIniciales && props.criteriosIniciales.nombre) || '',
+        categoria: (props.criteriosIniciales && props.criteriosIniciales.categoria) || '',
+        origen: (props.criteriosIniciales && props.criteriosIniciales.origen) || '',
+        ingrediente: (props.criteriosIniciales && props.criteriosIniciales.ingrediente) || ''
+      },
+      sugerenciasIngrediente: [],
+      errorValidacion: ''
+    };
+    this.elemento = null;
+    this.crearElemento();
+    this.renderizar();
+    this.configurarEventos();
+  }
 
-    this.elemento = document.createElement("form");
-    this.elemento.className = "formulario-busqueda";
+  crearElemento() {
+    this.elemento = document.createElement('form');
+    this.elemento.className = 'formulario-explorar';
     this.elemento.noValidate = true;
+    this.contenedor.appendChild(this.elemento);
+  }
 
-    this.manejadorSubmit = (evento) => {
-      evento.preventDefault();
+  renderizar() {
+    this.elemento.textContent = '';
+
+    const grid = document.createElement('div');
+    grid.className = 'campos-cuadricula';
+
+    // 1. Campo Nombre
+    const grupoNombre = document.createElement('div');
+    grupoNombre.className = 'grupo-campo';
+    const lblNombre = document.createElement('label');
+    lblNombre.className = 'etiqueta-campo';
+    lblNombre.textContent = 'Nombre de receta';
+    const inputNombre = document.createElement('input');
+    inputNombre.type = 'text';
+    inputNombre.name = 'nombre';
+    inputNombre.className = 'campo-control';
+    inputNombre.placeholder = 'Ej. Arrabiata, Tacos...';
+    inputNombre.value = this.estado.criterios.nombre;
+    grupoNombre.appendChild(lblNombre);
+    grupoNombre.appendChild(inputNombre);
+
+    // 2. Selector Categoría
+    const grupoCat = document.createElement('div');
+    grupoCat.className = 'grupo-campo';
+    const lblCat = document.createElement('label');
+    lblCat.className = 'etiqueta-campo';
+    lblCat.textContent = 'Categoría';
+    const selectCat = document.createElement('select');
+    selectCat.name = 'categoria';
+    selectCat.className = 'selector-control';
+    const optCatTodas = document.createElement('option');
+    optCatTodas.value = '';
+    optCatTodas.textContent = 'Todas las categorías';
+    selectCat.appendChild(optCatTodas);
+    this.estado.categorias.forEach((cat) => {
+      const opt = document.createElement('option');
+      opt.value = cat.nombre;
+      opt.textContent = cat.nombre;
+      if (this.estado.criterios.categoria === cat.nombre) opt.selected = true;
+      selectCat.appendChild(opt);
+    });
+    grupoCat.appendChild(lblCat);
+    grupoCat.appendChild(selectCat);
+
+    // 3. Selector Origen
+    const grupoOri = document.createElement('div');
+    grupoOri.className = 'grupo-campo';
+    const lblOri = document.createElement('label');
+    lblOri.className = 'etiqueta-campo';
+    lblOri.textContent = 'Origen (Cocina)';
+    const selectOri = document.createElement('select');
+    selectOri.name = 'origen';
+    selectOri.className = 'selector-control';
+    const optOriTodos = document.createElement('option');
+    optOriTodos.value = '';
+    optOriTodos.textContent = 'Todos los orígenes';
+    selectOri.appendChild(optOriTodos);
+    this.estado.origenes.forEach((ori) => {
+      const opt = document.createElement('option');
+      opt.value = ori;
+      opt.textContent = ori;
+      if (this.estado.criterios.origen === ori) opt.selected = true;
+      selectOri.appendChild(opt);
+    });
+    grupoOri.appendChild(lblOri);
+    grupoOri.appendChild(selectOri);
+
+    // 4. Campo Ingrediente con sugerencias
+    const grupoIng = document.createElement('div');
+    grupoIng.className = 'grupo-campo';
+    const lblIng = document.createElement('label');
+    lblIng.className = 'etiqueta-campo';
+    lblIng.textContent = 'Ingrediente';
+    const inputIng = document.createElement('input');
+    inputIng.type = 'text';
+    inputIng.name = 'ingrediente';
+    inputIng.autocomplete = 'off';
+    inputIng.className = 'campo-control';
+    inputIng.placeholder = 'Escribe para filtrar...';
+    inputIng.value = this.estado.criterios.ingrediente;
+
+    const ulSugerencias = document.createElement('ul');
+    ulSugerencias.className = 'lista-sugerencias';
+    ulSugerencias.style.display = 'none';
+
+    grupoIng.appendChild(lblIng);
+    grupoIng.appendChild(inputIng);
+    grupoIng.appendChild(ulSugerencias);
+
+    grid.appendChild(grupoNombre);
+    grid.appendChild(grupoCat);
+    grid.appendChild(grupoOri);
+    grid.appendChild(grupoIng);
+    this.elemento.appendChild(grid);
+
+    // Mensaje de validación
+    const msgError = document.createElement('p');
+    msgError.className = 'mensaje-validacion';
+    msgError.textContent = this.estado.errorValidacion;
+    this.elemento.appendChild(msgError);
+
+    // Botones de acción
+    const filaBotones = document.createElement('div');
+    filaBotones.style.display = 'flex';
+    filaBotones.style.gap = '0.75rem';
+    filaBotones.style.marginTop = '1rem';
+
+    const btnBuscar = document.createElement('button');
+    btnBuscar.type = 'submit';
+    btnBuscar.className = 'btn btn-primario';
+    btnBuscar.textContent = 'Aplicar filtros';
+
+    const btnLimpiar = document.createElement('button');
+    btnLimpiar.type = 'button';
+    btnLimpiar.className = 'btn btn-secundario btn-limpiar-filtros';
+    btnLimpiar.textContent = 'Limpiar';
+
+    filaBotones.appendChild(btnBuscar);
+    filaBotones.appendChild(btnLimpiar);
+    this.elemento.appendChild(filaBotones);
+  }
+
+  configurarEventos() {
+    this.manejadorInput = (e) => {
+      const { name, value } = e.target;
+      if (!name) return;
+      this.estado.criterios[name] = value;
+
+      if (name === 'ingrediente') {
+        const ul = this.elemento.querySelector('.lista-sugerencias');
+        const termino = value.trim().toLowerCase();
+        ul.textContent = '';
+
+        if (termino.length >= 1) {
+          const coincidencias = this.estado.ingredientes
+            .filter((ing) => ing.toLowerCase().includes(termino))
+            .slice(0, 8);
+
+          if (coincidencias.length > 0) {
+            coincidencias.forEach((item) => {
+              const li = document.createElement('li');
+              li.className = 'item-sugerencia';
+              li.textContent = item;
+              li.dataset.valorIngrediente = item;
+              ul.appendChild(li);
+            });
+            ul.style.display = 'block';
+            return;
+          }
+        }
+        ul.style.display = 'none';
+      }
+    };
+
+    this.manejadorClick = (e) => {
+      const sugerencia = e.target.closest('[data-valor-ingrediente]');
+      if (sugerencia) {
+        const valor = sugerencia.dataset.valorIngrediente;
+        this.estado.criterios.ingrediente = valor;
+        const inputIng = this.elemento.querySelector('input[name="ingrediente"]');
+        const ul = this.elemento.querySelector('.lista-sugerencias');
+        if (inputIng) inputIng.value = valor;
+        if (ul) ul.style.display = 'none';
+        return;
+      }
+
+      if (e.target.classList.contains('btn-limpiar-filtros')) {
+        this.estado.criterios = { nombre: '', categoria: '', origen: '', ingrediente: '' };
+        this.estado.errorValidacion = '';
+        this.renderizar();
+        this.elemento.dispatchEvent(new CustomEvent('limpiar-busqueda', { bubbles: true }));
+      }
+    };
+
+    this.manejadorSubmit = (e) => {
+      e.preventDefault();
+      const { nombre, categoria, origen, ingrediente } = this.estado.criterios;
+      const nLimpio = nombre.trim();
+      const iLimpio = ingrediente.trim();
+
+      if (!nLimpio && !categoria && !origen && !iLimpio) {
+        this.mostrarError('Debes seleccionar o escribir al menos un criterio de búsqueda.');
+        return;
+      }
+
+      if (nLimpio.length > 0 && nLimpio.length < 2) {
+        this.mostrarError('El nombre a buscar debe tener al menos 2 caracteres.');
+        return;
+      }
+
+      if (iLimpio.length > 0 && iLimpio.length < 2) {
+        this.mostrarError('El ingrediente debe tener al menos 2 caracteres.');
+        return;
+      }
+
+      this.mostrarError('');
       this.elemento.dispatchEvent(
-        new CustomEvent("ejecutar-busqueda", {
+        new CustomEvent('ejecutar-busqueda', {
           bubbles: true,
-          detail: this.obtenerCriterios()
+          detail: {
+            criterios: {
+              nombre: nLimpio,
+              categoria,
+              origen,
+              ingrediente: iLimpio
+            }
+          }
         })
       );
     };
 
-    this.manejadorClick = (evento) => {
-      if (!evento.target.closest("[data-accion='limpiar']")) return;
-      this.elemento.reset();
-      this.elemento.dispatchEvent(
-        new CustomEvent("limpiar-busqueda", { bubbles: true })
-      );
-    };
-
-    this.elemento.addEventListener("submit", this.manejadorSubmit);
-    this.elemento.addEventListener("click", this.manejadorClick);
-
-    if (contenedor) contenedor.appendChild(this.elemento);
-
-    this.renderizar();
-    this.cargarOpciones();
+    this.elemento.addEventListener('input', this.manejadorInput);
+    this.elemento.addEventListener('change', this.manejadorInput);
+    this.elemento.addEventListener('click', this.manejadorClick);
+    this.elemento.addEventListener('submit', this.manejadorSubmit);
   }
 
-  renderizar() {
-    if (this.destruido) return;
-
-    this.elemento.textContent = "";
-
-    this.elemento.appendChild(
-      this.crearCampo({
-        id: "filtro-nombre",
-        etiqueta: "Nombre",
-        tipo: "search",
-        marcador: "Ej. chicken, pasta…"
-      })
-    );
-
-    this.elemento.appendChild(
-      this.crearSelect({
-        id: "filtro-categoria",
-        etiqueta: "Categoría",
-        textoInicial: "Todas las categorías"
-      })
-    );
-
-    this.elemento.appendChild(
-      this.crearSelect({
-        id: "filtro-origen",
-        etiqueta: "Origen",
-        textoInicial: "Todos los orígenes"
-      })
-    );
-
-    this.elemento.appendChild(
-      this.crearCampo({
-        id: "filtro-ingrediente",
-        etiqueta: "Ingrediente",
-        tipo: "search",
-        marcador: "Ej. garlic, rice…"
-      })
-    );
-
-    const acciones = document.createElement("div");
-    acciones.className = "formulario-acciones";
-
-    const buscar = document.createElement("button");
-    buscar.type = "submit";
-    buscar.className = "boton boton--primario";
-    buscar.textContent = "Buscar recetas";
-
-    const limpiar = document.createElement("button");
-    limpiar.type = "button";
-    limpiar.className = "boton boton--secundario";
-    limpiar.dataset.accion = "limpiar";
-    limpiar.textContent = "Limpiar";
-
-    acciones.append(buscar, limpiar);
-    this.elemento.appendChild(acciones);
-
-    this.aplicarCriterios(this.props.criterios || {});
-  }
-
-  crearCampo({ id, etiqueta, tipo, marcador }) {
-    const campo = document.createElement("div");
-    campo.className = "campo";
-
-    const label = document.createElement("label");
-    label.className = "campo-etiqueta";
-    label.htmlFor = id;
-    label.textContent = etiqueta;
-
-    const input = document.createElement("input");
-    input.className = "campo-control";
-    input.id = id;
-    input.name = id.replace("filtro-", "");
-    input.type = tipo;
-    input.placeholder = marcador;
-    input.autocomplete = "off";
-
-    campo.append(label, input);
-    return campo;
-  }
-
-  crearSelect({ id, etiqueta, textoInicial }) {
-    const campo = document.createElement("div");
-    campo.className = "campo";
-
-    const label = document.createElement("label");
-    label.className = "campo-etiqueta";
-    label.htmlFor = id;
-    label.textContent = etiqueta;
-
-    const select = document.createElement("select");
-    select.className = "campo-control";
-    select.id = id;
-    select.name = id.replace("filtro-", "");
-
-    const opcion = document.createElement("option");
-    opcion.value = "";
-    opcion.textContent = textoInicial;
-    select.appendChild(opcion);
-
-    campo.append(label, select);
-    return campo;
-  }
-
-  async cargarOpciones() {
-    const resultados = await Promise.allSettled([
-      ServicioApi.obtenerCategorias(),
-      ServicioApi.obtenerOrigenes()
-    ]);
-
-    if (this.destruido) return;
-
-    const categorias = resultados[0].status === "fulfilled" ? resultados[0].value : [];
-    const origenes = resultados[1].status === "fulfilled" ? resultados[1].value : [];
-
-    this.llenarSelect("filtro-categoria", categorias.map((c) => c.nombre));
-    this.llenarSelect("filtro-origen", origenes);
-    this.aplicarCriterios(this.props.criterios || {});
-  }
-
-  llenarSelect(id, valores) {
-    const select = this.elemento.querySelector(`#${id}`);
-    if (!select) return;
-
-    const actual = select.value;
-    select.textContent = "";
-
-    const inicial = document.createElement("option");
-    inicial.value = "";
-    inicial.textContent = id.includes("categoria")
-      ? "Todas las categorías"
-      : "Todos los orígenes";
-    select.appendChild(inicial);
-
-    valores.forEach((valor) => {
-      const opcion = document.createElement("option");
-      opcion.value = valor;
-      opcion.textContent = valor;
-      select.appendChild(opcion);
-    });
-
-    select.value = valores.includes(actual) ? actual : "";
-  }
-
-  obtenerCriterios() {
-    const leer = (id) => {
-      const campo = this.elemento.querySelector(`#${id}`);
-      return campo ? campo.value.trim() : "";
-    };
-
-    return {
-      nombre: leer("filtro-nombre"),
-      categoria: leer("filtro-categoria"),
-      origen: leer("filtro-origen"),
-      ingrediente: leer("filtro-ingrediente")
-    };
-  }
-
-  aplicarCriterios(criterios) {
-    const asignar = (id, valor) => {
-      const campo = this.elemento.querySelector(`#${id}`);
-      if (campo) campo.value = valor || "";
-    };
-
-    asignar("filtro-nombre", criterios.nombre);
-    asignar("filtro-categoria", criterios.categoria);
-    asignar("filtro-origen", criterios.origen);
-    asignar("filtro-ingrediente", criterios.ingrediente);
+  mostrarError(texto) {
+    this.estado.errorValidacion = texto;
+    const msg = this.elemento.querySelector('.mensaje-validacion');
+    if (msg) msg.textContent = texto;
   }
 
   destruir() {
-    if (this.destruido) return;
-
-    this.destruido = true;
-    this.elemento.removeEventListener("submit", this.manejadorSubmit);
-    this.elemento.removeEventListener("click", this.manejadorClick);
-    this.elemento.remove();
-    this.elemento = null;
+    if (this.elemento) {
+      this.elemento.removeEventListener('input', this.manejadorInput);
+      this.elemento.removeEventListener('change', this.manejadorInput);
+      this.elemento.removeEventListener('click', this.manejadorClick);
+      this.elemento.removeEventListener('submit', this.manejadorSubmit);
+      this.elemento.remove();
+      this.elemento = null;
+    }
   }
 }

@@ -1,80 +1,85 @@
-﻿"use strict";
-
-/**
- * Paginador — navegación entre páginas de resultados.
- *
- * PROVISIONAL — archivo asignado al Integrante 1.
- * Emite `cambio-pagina` con `{ pagina }`.
- */
-class Paginador {
+﻿class Paginador {
   constructor(contenedor, props = {}) {
     this.contenedor = contenedor;
-    this.props = { paginaActual: 1, totalPaginas: 1, ...props };
-    this.destruido = false;
-
-    this.elemento = document.createElement("nav");
-    this.elemento.className = "paginador";
-    this.elemento.setAttribute("aria-label", "Paginación de resultados");
-
-    this.manejadorClick = (evento) => {
-      const boton = evento.target.closest("button[data-pagina]");
-      if (!boton || boton.disabled) return;
-
-      const pagina = Number(boton.dataset.pagina);
-      if (!Number.isFinite(pagina) || pagina === this.props.paginaActual) return;
-
-      this.elemento.dispatchEvent(
-        new CustomEvent("cambio-pagina", { bubbles: true, detail: { pagina } })
-      );
+    this.estado = {
+      paginaActual: props.paginaActual || 1,
+      totalPaginas: props.totalPaginas || 1
     };
-
-    this.elemento.addEventListener("click", this.manejadorClick);
-    if (contenedor) contenedor.appendChild(this.elemento);
-
+    this.elemento = null;
+    this.manejadorClick = null;
+    this.crearElemento();
     this.renderizar();
+    this.configurarEventos();
   }
 
-  actualizar(props = {}) {
-    if (this.destruido) return;
-    this.props = { ...this.props, ...props };
+  crearElemento() {
+    this.elemento = document.createElement('div');
+    this.elemento.className = 'paginador-barra';
+    this.contenedor.appendChild(this.elemento);
+  }
+
+  actualizar(paginaActual, totalPaginas) {
+    this.estado.paginaActual = paginaActual;
+    this.estado.totalPaginas = totalPaginas;
     this.renderizar();
   }
 
   renderizar() {
-    if (this.destruido) return;
+    this.elemento.textContent = '';
+    if (this.estado.totalPaginas <= 1) {
+      this.elemento.style.display = 'none';
+      return;
+    }
+    this.elemento.style.display = 'flex';
 
-    this.elemento.textContent = "";
-    const { paginaActual, totalPaginas } = this.props;
+    const btnAnterior = document.createElement('button');
+    btnAnterior.type = 'button';
+    btnAnterior.className = 'btn';
+    btnAnterior.dataset.direccion = 'anterior';
+    btnAnterior.disabled = this.estado.paginaActual <= 1;
+    btnAnterior.textContent = '← Anterior';
 
-    if (totalPaginas <= 1) return;
+    const info = document.createElement('span');
+    info.textContent = `Página ${this.estado.paginaActual} de ${this.estado.totalPaginas}`;
 
-    const anterior = document.createElement("button");
-    anterior.type = "button";
-    anterior.className = "paginador-boton";
-    anterior.dataset.pagina = String(paginaActual - 1);
-    anterior.textContent = "← Anterior";
-    anterior.disabled = paginaActual <= 1;
+    const btnSiguiente = document.createElement('button');
+    btnSiguiente.type = 'button';
+    btnSiguiente.className = 'btn';
+    btnSiguiente.dataset.direccion = 'siguiente';
+    btnSiguiente.disabled = this.estado.paginaActual >= this.estado.totalPaginas;
+    btnSiguiente.textContent = 'Siguiente →';
 
-    const info = document.createElement("span");
-    info.className = "paginador-info";
-    info.setAttribute("aria-live", "polite");
-    info.textContent = `Página ${paginaActual} de ${totalPaginas}`;
+    this.elemento.appendChild(btnAnterior);
+    this.elemento.appendChild(info);
+    this.elemento.appendChild(btnSiguiente);
+  }
 
-    const siguiente = document.createElement("button");
-    siguiente.type = "button";
-    siguiente.className = "paginador-boton";
-    siguiente.dataset.pagina = String(paginaActual + 1);
-    siguiente.textContent = "Siguiente →";
-    siguiente.disabled = paginaActual >= totalPaginas;
+  configurarEventos() {
+    this.manejadorClick = (e) => {
+      const btn = e.target.closest('button[data-direccion]');
+      if (!btn) return;
+      const nuevaPagina =
+        btn.dataset.direccion === 'anterior'
+          ? this.estado.paginaActual - 1
+          : this.estado.paginaActual + 1;
 
-    this.elemento.append(anterior, info, siguiente);
+      if (nuevaPagina >= 1 && nuevaPagina <= this.estado.totalPaginas) {
+        this.elemento.dispatchEvent(
+          new CustomEvent('cambio-pagina', {
+            bubbles: true,
+            detail: { pagina: nuevaPagina }
+          })
+        );
+      }
+    };
+    this.elemento.addEventListener('click', this.manejadorClick);
   }
 
   destruir() {
-    if (this.destruido) return;
-    this.destruido = true;
-    this.elemento.removeEventListener("click", this.manejadorClick);
-    this.elemento.remove();
-    this.elemento = null;
+    if (this.elemento) {
+      this.elemento.removeEventListener('click', this.manejadorClick);
+      this.elemento.remove();
+      this.elemento = null;
+    }
   }
 }
