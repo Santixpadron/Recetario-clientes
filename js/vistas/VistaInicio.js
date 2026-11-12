@@ -1,392 +1,331 @@
-﻿"use strict";
-
-/**
- * VistaInicio — portada con receta destacada, categorías y orígenes.
- *
- * PROVISIONAL — archivo asignado al Integrante 1.
- * Usa `Promise.allSettled` para que la portada siga funcionando aunque falle
- * una de las tres fuentes.
- */
-class VistaInicio {
+﻿class VistaInicio {
   constructor(contenedor) {
     this.contenedor = contenedor;
-    this.destruido = false;
-    this.hijos = [];
-    this.controlador = null;
-
     this.estado = {
-      cargando: true,
-      error: "",
-      receta: null,
+      recetaDestacada: null,
       categorias: [],
-      origenes: []
+      destruida: false
     };
-
-    this.elemento = document.createElement("section");
-    this.elemento.className = "vista";
-
-    this.manejadorClick = (evento) => this.manejarClick(evento);
-    this.manejadorReintentar = () => this.cargar();
-
-    this.elemento.addEventListener("click", this.manejadorClick);
-    this.elemento.addEventListener("reintentar-accion", this.manejadorReintentar);
-
-    if (contenedor) contenedor.appendChild(this.elemento);
-
-    this.renderizar();
-    this.cargar();
+    this.componentesHijos = [];
+    this.elemento = null;
+    this.crearElemento();
+    this.renderizarEstructuraBase();
+    this.configurarEventos();
+    this.cargarDatosIniciales();
   }
 
-  manejarClick(evento) {
-    const accion = evento.target.closest("[data-accion]");
-    if (!accion) return;
-
-    const tipo = accion.dataset.accion;
-
-    if (tipo === "explorar" || tipo === "comparador") {
-      this.elemento.dispatchEvent(
-        new CustomEvent("navegar-vista", {
-          bubbles: true,
-          detail: { vista: tipo === "explorar" ? "explorar" : "comparador" }
-        })
-      );
-      return;
-    }
-
-    if (tipo === "ver-categorias" || tipo === "ver-origenes") {
-      this.elemento.dispatchEvent(
-        new CustomEvent("navegar-vista", {
-          bubbles: true,
-          detail: { vista: "categorias-origenes" }
-        })
-      );
-      return;
-    }
-
-    if (tipo === "ver-receta" && this.estado.receta) {
-      this.elemento.dispatchEvent(
-        new CustomEvent("abrir-detalle", {
-          bubbles: true,
-          detail: { id: this.estado.receta.id, receta: this.estado.receta }
-        })
-      );
-      return;
-    }
-
-    if (tipo === "comparar" && this.estado.receta) {
-      this.elemento.dispatchEvent(
-        new CustomEvent("agregar-comparador", {
-          bubbles: true,
-          detail: { receta: this.estado.receta }
-        })
-      );
-      return;
-    }
-
-    if (tipo === "categoria") {
-      this.elemento.dispatchEvent(
-        new CustomEvent("abrir-ficha-categoria", {
-          bubbles: true,
-          detail: {
-            categoria: accion.dataset.grupo,
-            pestana: accion.dataset.pestana || "categorias"
-          }
-        })
-      );
-    }
+  crearElemento() {
+    this.elemento = document.createElement('div');
+    this.elemento.className = 'vista-animada';
+    this.contenedor.appendChild(this.elemento);
   }
 
-  async cargar() {
-    if (this.destruido) return;
+  renderizarEstructuraBase() {
+    this.elemento.textContent = '';
 
-    if (this.controlador) this.controlador.abort();
-    this.controlador = new AbortController();
+    // Sección Receta Destacada
+    const secDestacada = document.createElement('section');
+    secDestacada.className = 'seccion-bloque';
 
-    this.estado = { ...this.estado, cargando: true, error: "" };
-    this.renderizar();
+    const encDestacada = document.createElement('div');
+    encDestacada.className = 'encabezado-seccion';
+    const h2Dest = document.createElement('h1');
+    h2Dest.className = 'titulo-seccion';
+    h2Dest.textContent = 'Receta Destacada del Momento';
 
-    const resultados = await Promise.allSettled([
-      ServicioApi.obtenerRecetaAleatoria(null, this.controlador.signal),
-      ServicioApi.obtenerCategorias(),
-      ServicioApi.obtenerOrigenes()
+    const btnOtra = document.createElement('button');
+    btnOtra.type = 'button';
+    btnOtra.className = 'btn btn-primario btn-otra-receta';
+    btnOtra.textContent = 'Otra receta al azar';
+
+    encDestacada.appendChild(h2Dest);
+    encDestacada.appendChild(btnOtra);
+
+    this.zonaDestacada = document.createElement('div');
+    secDestacada.appendChild(encDestacada);
+    secDestacada.appendChild(this.zonaDestacada);
+
+    // Sección Cuadrícula de Categorías
+    const secCategorias = document.createElement('section');
+    secCategorias.className = 'seccion-bloque';
+    const h2Cat = document.createElement('h2');
+    h2Cat.className = 'titulo-seccion';
+    h2Cat.style.marginBottom = '1.25rem';
+    h2Cat.textContent = 'Explorar por Categorías';
+
+    this.zonaCategorias = document.createElement('div');
+    secCategorias.appendChild(h2Cat);
+    secCategorias.appendChild(this.zonaCategorias);
+
+    this.elemento.appendChild(secDestacada);
+    this.elemento.appendChild(secCategorias);
+  }
+
+  async cargarDatosIniciales() {
+    const cargaDest = new EstadoCarga(this.zonaDestacada, {
+      modo: 'cargando',
+      forma: 'destacada'
+    });
+    const cargaCat = new EstadoCarga(this.zonaCategorias, {
+      modo: 'cargando',
+      forma: 'tarjetas',
+      cantidad: 6
+    });
+    this.componentesHijos.push(cargaDest, cargaCat);
+
+    const [resDestacada, resCategorias] = await Promise.allSettled([
+      ServicioApi.obtenerRecetaAleatoria(),
+      ServicioApi.obtenerCategorias()
     ]);
 
-    if (this.destruido) return;
+    if (this.estado.destruida) return;
+    cargaDest.destruir();
+    cargaCat.destruir();
 
-    const receta = resultados[0].status === "fulfilled" ? resultados[0].value : null;
-    const categorias = resultados[1].status === "fulfilled" ? resultados[1].value : [];
-    const origenes = resultados[2].status === "fulfilled" ? resultados[2].value : [];
+    if (resDestacada.status === 'fulfilled') {
+      this.estado.recetaDestacada = resDestacada.value;
+      this.renderizarDestacada();
+    } else {
+      this.mostrarErrorDestacada(resDestacada.reason?.message);
+    }
 
-    const todoFallo = resultados.every((resultado) => resultado.status === "rejected");
-    const primerError = resultados.find((resultado) => resultado.status === "rejected");
+    if (resCategorias.status === 'fulfilled') {
+      this.estado.categorias = resCategorias.value;
+      this.renderizarCategorias();
+    } else {
+      this.mostrarErrorCategorias(resCategorias.reason?.message);
+    }
+  }
 
-    this.estado = {
-      cargando: false,
-      error: todoFallo
-        ? (primerError && primerError.reason && primerError.reason.message) ||
-          "No se pudo cargar la portada."
-        : "",
-      receta,
-      categorias,
-      origenes
+  async cargarOtraAleatoria() {
+    const idAnterior = this.estado.recetaDestacada ? this.estado.recetaDestacada.id : null;
+    this.zonaDestacada.textContent = '';
+    const indicador = new EstadoCarga(this.zonaDestacada, {
+      modo: 'cargando',
+      forma: 'destacada'
+    });
+    this.componentesHijos.push(indicador);
+
+    try {
+      const nueva = await ServicioApi.obtenerRecetaAleatoria(idAnterior);
+      if (this.estado.destruida) return;
+      indicador.destruir();
+      this.estado.recetaDestacada = nueva;
+      this.renderizarDestacada();
+    } catch (error) {
+      if (this.estado.destruida) return;
+      indicador.destruir();
+      this.mostrarErrorDestacada(error.message);
+    }
+  }
+
+  renderizarDestacada() {
+    this.zonaDestacada.textContent = '';
+    const r = this.estado.recetaDestacada;
+    if (!r) return;
+
+    const card = document.createElement('article');
+    card.className = 'tarjeta-destacada';
+
+    const img = document.createElement('img');
+    img.className = 'destacada-imagen';
+    img.src = r.imagen;
+    img.alt = r.nombre;
+
+    const contenido = document.createElement('div');
+    contenido.className = 'destacada-contenido';
+
+    const badges = document.createElement('div');
+    badges.className = 'insignias-fila';
+
+    const bCat = document.createElement('span');
+    bCat.className = 'pildora';
+    bCat.textContent = r.categoria;
+
+    const bOri = document.createElement('span');
+    bOri.className = 'pildora pildora-origen';
+    bOri.textContent = r.origen;
+
+    badges.appendChild(bCat);
+    badges.appendChild(bOri);
+
+    const h3 = document.createElement('h2');
+    h3.textContent = r.nombre;
+
+    const acciones = document.createElement('div');
+    acciones.style.display = 'flex';
+    acciones.style.gap = '0.75rem';
+    acciones.style.flexWrap = 'wrap';
+
+    const btnDetalle = document.createElement('button');
+    btnDetalle.type = 'button';
+    btnDetalle.className = 'btn btn-primario btn-ver-destacada';
+    btnDetalle.textContent = 'Ver preparación completa';
+
+    const btnComparar = document.createElement('button');
+    btnComparar.type = 'button';
+    btnComparar.className = 'btn btn-secundario btn-comparar-destacada';
+    btnComparar.textContent = '+ Agregar al comparador';
+
+    acciones.appendChild(btnDetalle);
+    acciones.appendChild(btnComparar);
+
+    contenido.appendChild(badges);
+    contenido.appendChild(h3);
+    contenido.appendChild(acciones);
+
+    card.appendChild(img);
+    card.appendChild(contenido);
+    this.zonaDestacada.appendChild(card);
+  }
+
+  mostrarErrorDestacada(mensaje) {
+    this.zonaDestacada.textContent = '';
+    const err = new EstadoCarga(this.zonaDestacada, {
+      modo: 'error',
+      titulo: 'No se pudo cargar la receta destacada',
+      mensaje: mensaje || 'Error al consultar la receta aleatoria.',
+      mostrarReintentar: true
+    });
+    err.elemento.dataset.seccionReintento = 'destacada';
+    this.componentesHijos.push(err);
+  }
+
+  renderizarCategorias() {
+    this.zonaCategorias.textContent = '';
+    const grid = document.createElement('div');
+    grid.className = 'cuadricula-tarjetas';
+
+    this.estado.categorias.forEach((cat) => {
+      const card = document.createElement('article');
+      card.className = 'tarjeta-categoria';
+      card.style.cursor = 'pointer';
+      card.tabIndex = 0;
+      card.dataset.categoriaNombre = cat.nombre;
+
+      const img = document.createElement('img');
+      img.className = 'tarjeta-img';
+      img.style.objectFit = 'contain';
+      img.style.padding = '0.75rem';
+      img.src = cat.imagen;
+      img.alt = cat.nombre;
+
+      const cuerpo = document.createElement('div');
+      cuerpo.className = 'tarjeta-cuerpo';
+
+      const titulo = document.createElement('h3');
+      titulo.className = 'tarjeta-titulo';
+      titulo.textContent = cat.nombre;
+
+      const desc = document.createElement('p');
+      desc.style.fontSize = '0.88rem';
+      desc.style.color = 'var(--texto-secundario)';
+      desc.textContent = `${cat.descripcion.slice(0, 120)}...`;
+
+      cuerpo.appendChild(titulo);
+      cuerpo.appendChild(desc);
+      card.appendChild(img);
+      card.appendChild(cuerpo);
+      grid.appendChild(card);
+    });
+
+    this.zonaCategorias.appendChild(grid);
+  }
+
+  mostrarErrorCategorias(mensaje) {
+    this.zonaCategorias.textContent = '';
+    const err = new EstadoCarga(this.zonaCategorias, {
+      modo: 'error',
+      titulo: 'No se pudieron cargar las categorías',
+      mensaje: mensaje || 'Error al obtener la lista de categorías.',
+      mostrarReintentar: true
+    });
+    err.elemento.dataset.seccionReintento = 'categorias';
+    this.componentesHijos.push(err);
+  }
+
+  configurarEventos() {
+    this.manejadorClick = async (e) => {
+      if (e.target.classList.contains('btn-otra-receta')) {
+        this.cargarOtraAleatoria();
+        return;
+      }
+
+      if (e.target.classList.contains('btn-ver-destacada') && this.estado.recetaDestacada) {
+        this.elemento.dispatchEvent(
+          new CustomEvent('abrir-detalle', {
+            bubbles: true,
+            detail: { id: this.estado.recetaDestacada.id }
+          })
+        );
+        return;
+      }
+
+      if (e.target.classList.contains('btn-comparar-destacada') && this.estado.recetaDestacada) {
+        this.elemento.dispatchEvent(
+          new CustomEvent('agregar-comparador', {
+            bubbles: true,
+            detail: {
+              id: this.estado.recetaDestacada.id,
+              receta: this.estado.recetaDestacada
+            }
+          })
+        );
+        return;
+      }
+
+      const cardCategoria = e.target.closest('[data-categoria-nombre]');
+      if (cardCategoria) {
+        this.elemento.dispatchEvent(
+          new CustomEvent('abrir-ficha-categoria', {
+            bubbles: true,
+            detail: { categoria: cardCategoria.dataset.categoriaNombre }
+          })
+        );
+      }
     };
 
-    this.renderizar();
-  }
+    this.manejadorReintentar = async (e) => {
+      const contenedorSeccion = e.target.closest('[data-seccion-reintento]');
+      if (!contenedorSeccion) return;
+      const tipo = contenedorSeccion.dataset.seccionReintento;
+      if (tipo === 'destacada') {
+        this.cargarOtraAleatoria();
+      } else if (tipo === 'categorias') {
+        this.zonaCategorias.textContent = '';
+        const carga = new EstadoCarga(this.zonaCategorias, {
+          modo: 'cargando',
+          forma: 'tarjetas',
+          cantidad: 6
+        });
+        this.componentesHijos.push(carga);
+        try {
+          const cats = await ServicioApi.obtenerCategorias();
+          if (this.estado.destruida) return;
+          carga.destruir();
+          this.estado.categorias = cats;
+          this.renderizarCategorias();
+        } catch (err) {
+          if (this.estado.destruida) return;
+          carga.destruir();
+          this.mostrarErrorCategorias(err.message);
+        }
+      }
+    };
 
-  renderizar() {
-    if (this.destruido) return;
-
-    this.limpiarHijos();
-    this.elemento.textContent = "";
-
-    this.elemento.appendChild(this.crearHero());
-
-    if (this.estado.cargando) {
-      this.hijos.push(
-        new EstadoCarga(this.elemento, { forma: "tarjetas", cantidad: 3 })
-      );
-      return;
-    }
-
-    if (this.estado.error) {
-      this.hijos.push(
-        new EstadoCarga(this.elemento, {
-          modo: "error",
-          titulo: "No se pudo cargar la portada",
-          mensaje: this.estado.error,
-          mostrarReintentar: true
-        })
-      );
-      return;
-    }
-
-    if (this.estado.receta) {
-      this.elemento.appendChild(this.crearDestacada(this.estado.receta));
-    }
-
-    if (this.estado.categorias.length > 0) {
-      this.elemento.appendChild(
-        this.crearCatalogo(
-          "Categorías",
-          this.estado.categorias.slice(0, 8).map((categoria) => ({
-            nombre: categoria.nombre,
-            imagen: categoria.imagen
-          })),
-          "categorias",
-          "ver-categorias"
-        )
-      );
-    }
-
-    if (this.estado.origenes.length > 0) {
-      this.elemento.appendChild(
-        this.crearCatalogo(
-          "Orígenes",
-          this.estado.origenes.slice(0, 8).map((origen) => ({
-            nombre: origen,
-            imagen: ""
-          })),
-          "origenes",
-          "ver-origenes"
-        )
-      );
-    }
-  }
-
-  crearHero() {
-    const hero = document.createElement("section");
-    hero.className = "hero";
-
-    const contenido = document.createElement("div");
-    contenido.className = "hero-contenido";
-
-    const etiqueta = document.createElement("span");
-    etiqueta.className = "hero-etiqueta";
-    etiqueta.textContent = "Laboratorio gastronómico";
-
-    const titulo = document.createElement("h1");
-    titulo.className = "hero-titulo";
-    titulo.textContent = "Descubre, compara y cocina mejor";
-
-    const texto = document.createElement("p");
-    texto.className = "hero-texto";
-    texto.textContent =
-      "Explora recetas de todo el mundo, revisa sus ingredientes y enfrenta dos opciones para elegir la más sencilla.";
-
-    const acciones = document.createElement("div");
-    acciones.className = "hero-acciones";
-
-    const explorar = document.createElement("button");
-    explorar.type = "button";
-    explorar.className = "boton boton--primario";
-    explorar.dataset.accion = "explorar";
-    explorar.textContent = "Explorar recetas";
-
-    const comparador = document.createElement("button");
-    comparador.type = "button";
-    comparador.className = "boton boton--secundario";
-    comparador.dataset.accion = "comparador";
-    comparador.textContent = "Abrir comparador";
-
-    acciones.append(explorar, comparador);
-    contenido.append(etiqueta, titulo, texto, acciones);
-
-    const figura = document.createElement("figure");
-    figura.className = "hero-figura";
-
-    const imagen = document.createElement("img");
-    imagen.src = "assets/ingrediente-default.svg";
-    imagen.alt = "";
-    imagen.width = 480;
-    imagen.height = 360;
-
-    figura.appendChild(imagen);
-    hero.append(contenido, figura);
-    return hero;
-  }
-
-  crearDestacada(receta) {
-    const seccion = document.createElement("section");
-    seccion.className = "seccion";
-
-    const titulo = document.createElement("h2");
-    titulo.className = "titulo-seccion";
-    titulo.textContent = "Receta destacada";
-    seccion.appendChild(titulo);
-
-    const articulo = document.createElement("article");
-    articulo.className = "destacada";
-
-    const imagen = document.createElement("img");
-    imagen.className = "destacada-imagen";
-    imagen.src = receta.imagen || "assets/ingrediente-default.svg";
-    imagen.alt = receta.imagen ? `Fotografía de ${receta.nombre}` : "";
-    imagen.width = 480;
-    imagen.height = 360;
-    imagen.addEventListener("error", () => {
-      imagen.onerror = null;
-      imagen.src = "assets/ingrediente-default.svg";
-    });
-
-    const cuerpo = document.createElement("div");
-    cuerpo.className = "destacada-cuerpo";
-
-    const nombre = document.createElement("h3");
-    nombre.className = "titulo-seccion";
-    nombre.textContent = receta.nombre;
-
-    const meta = document.createElement("p");
-    meta.className = "tarjeta-meta";
-    meta.textContent = [receta.categoria, receta.origen].filter(Boolean).join(" · ");
-
-    const descripcion = document.createElement("p");
-    descripcion.className = "texto-ayuda";
-    descripcion.textContent = this.resumir(receta.instrucciones, 180);
-
-    const acciones = document.createElement("div");
-    acciones.className = "detalle-acciones";
-
-    const ver = document.createElement("button");
-    ver.type = "button";
-    ver.className = "boton boton--primario";
-    ver.dataset.accion = "ver-receta";
-    ver.textContent = "Ver receta";
-
-    const comparar = document.createElement("button");
-    comparar.type = "button";
-    comparar.className = "boton boton--secundario";
-    comparar.dataset.accion = "comparar";
-    comparar.textContent = "Comparar";
-
-    acciones.append(ver, comparar);
-    cuerpo.append(nombre, meta, descripcion, acciones);
-    articulo.append(imagen, cuerpo);
-    seccion.appendChild(articulo);
-
-    return seccion;
-  }
-
-  crearCatalogo(tituloTexto, elementos, pestana, accionVerTodas) {
-    const seccion = document.createElement("section");
-    seccion.className = "seccion";
-
-    const encabezado = document.createElement("div");
-    encabezado.className = "encabezado-seccion";
-
-    const titulo = document.createElement("h2");
-    titulo.className = "titulo-seccion";
-    titulo.textContent = tituloTexto;
-
-    const verTodas = document.createElement("button");
-    verTodas.type = "button";
-    verTodas.className = "boton boton--fantasma boton--chico";
-    verTodas.dataset.accion = accionVerTodas;
-    verTodas.textContent = "Ver todos";
-
-    encabezado.append(titulo, verTodas);
-    seccion.appendChild(encabezado);
-
-    const cuadricula = document.createElement("div");
-    cuadricula.className = "fichas-grid";
-
-    elementos.forEach((elemento) => {
-      const boton = document.createElement("button");
-      boton.type = "button";
-      boton.className = "ficha";
-      boton.dataset.accion = "categoria";
-      boton.dataset.grupo = elemento.nombre;
-      boton.dataset.pestana = pestana;
-      boton.setAttribute("aria-label", `Ver recetas de ${elemento.nombre}`);
-
-      const imagen = document.createElement("img");
-      imagen.className = "ficha-imagen";
-      imagen.src = elemento.imagen || "assets/ingrediente-default.svg";
-      imagen.alt = "";
-      imagen.loading = "lazy";
-      imagen.width = 300;
-      imagen.height = 188;
-      imagen.addEventListener("error", () => {
-        imagen.onerror = null;
-        imagen.src = "assets/ingrediente-default.svg";
-      });
-
-      const nombre = document.createElement("span");
-      nombre.className = "ficha-titulo";
-      nombre.textContent = elemento.nombre;
-
-      boton.append(imagen, nombre);
-      cuadricula.appendChild(boton);
-    });
-
-    seccion.appendChild(cuadricula);
-    return seccion;
-  }
-
-  resumir(texto, limite) {
-    const limpio = String(texto || "").trim();
-    if (!limpio) return "Sin descripción disponible.";
-    if (limpio.length <= limite) return limpio;
-    return `${limpio.slice(0, limite).trimEnd()}…`;
-  }
-
-  limpiarHijos() {
-    this.hijos.forEach((hijo) => {
-      if (hijo && typeof hijo.destruir === "function") hijo.destruir();
-    });
-    this.hijos = [];
+    this.elemento.addEventListener('click', this.manejadorClick);
+    this.elemento.addEventListener('reintentar-accion', this.manejadorReintentar);
   }
 
   destruir() {
-    if (this.destruido) return;
-
-    this.destruido = true;
-    if (this.controlador) this.controlador.abort();
-    this.limpiarHijos();
-
-    this.elemento.removeEventListener("click", this.manejadorClick);
-    this.elemento.removeEventListener("reintentar-accion", this.manejadorReintentar);
-    this.elemento.remove();
-    this.elemento = null;
+    this.estado.destruida = true;
+    this.componentesHijos.forEach((c) => c.destruir());
+    this.componentesHijos = [];
+    if (this.elemento) {
+      this.elemento.removeEventListener('click', this.manejadorClick);
+      this.elemento.removeEventListener('reintentar-accion', this.manejadorReintentar);
+      this.elemento.remove();
+      this.elemento = null;
+    }
   }
 }
