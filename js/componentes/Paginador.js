@@ -1,4 +1,11 @@
-﻿class Paginador {
+﻿/*
+ Este archivo contiene la clase Paginador, que se encarga de crear y manejar un componente de paginación en la interfaz de usuario.
+
+*/
+
+
+
+class Paginador {
   constructor(contenedor, props = {}) {
     this.contenedor = contenedor;
     this.estado = {
@@ -12,19 +19,19 @@
     this.configurarEventos();
   }
 
-  crearElemento() {
+  crearElemento() { /* se encarga de crear el elemento HTML del paginador */
     this.elemento = document.createElement('div');
     this.elemento.className = 'paginador-barra';
     this.contenedor.appendChild(this.elemento);
   }
 
-  actualizar(paginaActual, totalPaginas) {
+  actualizar(paginaActual, totalPaginas) { /* se encarga de actualizar el estado del paginador y volver a renderizarlo */
     this.estado.paginaActual = paginaActual;
     this.estado.totalPaginas = totalPaginas;
     this.renderizar();
   }
 
-  renderizar() {
+  renderizar() { /* se encarga de renderizar el paginador en la interfaz de usuario */
     this.elemento.textContent = '';
     if (this.estado.totalPaginas <= 1) {
       this.elemento.style.display = 'none';
@@ -54,7 +61,7 @@
     this.elemento.appendChild(btnSiguiente);
   }
 
-  configurarEventos() {
+  configurarEventos() { /* se encarga de configurar los eventos del paginador */
     this.manejadorClick = (e) => {
       const btn = e.target.closest('button[data-direccion]');
       if (!btn) return;
@@ -75,7 +82,7 @@
     this.elemento.addEventListener('click', this.manejadorClick);
   }
 
-  destruir() {
+  destruir() { /* se encarga de destruir el paginador y limpiar los eventos */
     if (this.elemento) {
       this.elemento.removeEventListener('click', this.manejadorClick);
       this.elemento.remove();

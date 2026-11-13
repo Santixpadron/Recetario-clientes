@@ -1,4 +1,4 @@
-class BarraNavegacion {
+class BarraNavegacion { /* se encarga de crear y manejar la barra de navegación en la interfaz de usuario */
   constructor(contenedor, props = {}) {
     this.contenedor = contenedor;
     this.estado = {
@@ -12,19 +12,19 @@ class BarraNavegacion {
     this.configurarEventos();
   }
 
-  crearElemento() {
+  crearElemento() { /* se encarga de crear el elemento HTML de la barra de navegación */
     this.elemento = document.createElement('nav');
     this.elemento.className = 'barra-nav';
     this.elemento.setAttribute('aria-label', 'Navegación principal');
     this.contenedor.appendChild(this.elemento);
   }
 
-  actualizarEstado(nuevoEstado) {
+  actualizarEstado(nuevoEstado) { /* se encarga de actualizar el estado de la barra de navegación y volver a renderizarla */
     this.estado = { ...this.estado, ...nuevoEstado };
     this.renderizar();
   }
 
-  renderizar() {
+  renderizar() { /* se encarga de renderizar la barra de navegación en la interfaz de usuario */
     this.elemento.textContent = '';
 
     const botonLogo = document.createElement('button');
@@ -51,7 +51,7 @@ class BarraNavegacion {
       { id: 'comparador', texto: 'Comparador', conContador: true }
     ];
 
-    items.forEach((item) => {
+    items.forEach((item) => { /* se encarga de crear los elementos de la barra de navegación según los items definidos */
       const li = document.createElement('li');
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -65,7 +65,7 @@ class BarraNavegacion {
       spanTexto.textContent = item.texto;
       btn.appendChild(spanTexto);
 
-      if (item.conContador) {
+      if (item.conContador) { /* se encarga de agregar un contador al botón del comparador si corresponde */
         const badge = document.createElement('span');
         badge.className = 'insignia-comparador';
         badge.textContent = `${this.estado.cantidadComparador}/2`;
@@ -80,7 +80,7 @@ class BarraNavegacion {
     this.elemento.appendChild(lista);
   }
 
-  configurarEventos() {
+  configurarEventos() { /* se encarga de configurar los eventos de la barra de navegación */
     this.manejadorClick = (e) => {
       const boton = e.target.closest('[data-vista]');
       if (!boton) return;
@@ -95,7 +95,7 @@ class BarraNavegacion {
     this.elemento.addEventListener('click', this.manejadorClick);
   }
 
-  destruir() {
+  destruir() { /* se encarga de destruir la barra de navegación y limpiar los eventos */
     if (this.elemento) {
       this.elemento.removeEventListener('click', this.manejadorClick);
       this.elemento.remove();
