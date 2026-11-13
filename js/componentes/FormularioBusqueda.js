@@ -1,4 +1,6 @@
-﻿class FormularioBusqueda {
+﻿/*este archivo contiene la implementación del formulario de búsqueda para filtrar recetas */
+
+class FormularioBusqueda { /* se encarga de crear y manejar un formulario de búsqueda para filtrar recetas según diferentes criterios */
   constructor(contenedor, props = {}) {
     this.contenedor = contenedor;
     this.estado = {
@@ -22,14 +24,14 @@
     this.configurarEventos();
   }
 
-  crearElemento() {
+  crearElemento() { /* se encarga de crear el elemento HTML del formulario de búsqueda y lo agrega al contenedor proporcionado */
     this.elemento = document.createElement('form');
     this.elemento.className = 'formulario-explorar';
     this.elemento.noValidate = true;
     this.contenedor.appendChild(this.elemento);
   }
 
-  renderizar() {
+  renderizar() { /* se encarga de renderizar el formulario de búsqueda en la interfaz de usuario, mostrando los campos y botones correspondientes */
     this.elemento.textContent = '';
 
     const grid = document.createElement('div');
@@ -160,7 +162,7 @@
     this.elemento.appendChild(filaBotones);
   }
 
-  configurarEventos() {
+  configurarEventos() { /* se encarga de configurar los eventos del formulario de búsqueda, incluyendo la entrada de texto, el clic en las sugerencias y el envío del formulario */
     this.manejadorInput = (e) => {
       const { name, value } = e.target;
       if (!name) return;
@@ -192,7 +194,7 @@
       }
     };
 
-    this.manejadorClick = (e) => {
+    this.manejadorClick = (e) => { // se encarga de manejar los clics en las sugerencias de ingredientes y en el botón de limpiar filtros
       const sugerencia = e.target.closest('[data-valor-ingrediente]');
       if (sugerencia) {
         const valor = sugerencia.dataset.valorIngrediente;
@@ -204,7 +206,7 @@
         return;
       }
 
-      if (e.target.classList.contains('btn-limpiar-filtros')) {
+      if (e.target.classList.contains('btn-limpiar-filtros')) { // se encarga de limpiar los criterios de búsqueda y disparar un evento personalizado 'limpiar-busqueda'
         this.estado.criterios = { nombre: '', categoria: '', origen: '', ingrediente: '' };
         this.estado.errorValidacion = '';
         this.renderizar();
@@ -212,7 +214,7 @@
       }
     };
 
-    this.manejadorSubmit = (e) => {
+    this.manejadorSubmit = (e) => { // se encarga de manejar el envío del formulario, validando los criterios de búsqueda y disparando un evento personalizado 'ejecutar-busqueda' si todo es válido
       e.preventDefault();
       const { nombre, categoria, origen, ingrediente } = this.estado.criterios;
       const nLimpio = nombre.trim();
@@ -255,13 +257,13 @@
     this.elemento.addEventListener('submit', this.manejadorSubmit);
   }
 
-  mostrarError(texto) {
+  mostrarError(texto) { // se encarga de mostrar un mensaje de error de validación en el formulario de búsqueda
     this.estado.errorValidacion = texto;
     const msg = this.elemento.querySelector('.mensaje-validacion');
     if (msg) msg.textContent = texto;
   }
 
-  destruir() {
+  destruir() { // se encarga de destruir el formulario de búsqueda y limpiar los eventos
     if (this.elemento) {
       this.elemento.removeEventListener('input', this.manejadorInput);
       this.elemento.removeEventListener('change', this.manejadorInput);

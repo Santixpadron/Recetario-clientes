@@ -7,7 +7,7 @@
  * TheMealDB se usa el SVG local `assets/ingrediente-default.svg` sin bucles de
  * error.
  */
-class ListaIngredientes {
+class ListaIngredientes { // se encarga de crear y renderizar una lista de ingredientes en la interfaz de usuario, mostrando la imagen, nombre y medida de cada ingrediente
   constructor(contenedor, props = {}) {
     this.contenedor = contenedor;
     this.props = { ingredientes: [], ...props };
@@ -22,7 +22,7 @@ class ListaIngredientes {
     this.renderizar();
   }
 
-  actualizar(props = {}) {
+  actualizar(props = {}) { // se encarga de actualizar las propiedades y el estado de la lista de ingredientes y volver a renderizarla
     if (this.destruido) return;
     this.props = { ...this.props, ...props };
     this.estado = {
@@ -32,7 +32,7 @@ class ListaIngredientes {
     this.renderizar();
   }
 
-  renderizar() {
+  renderizar() { // se encarga de renderizar la lista de ingredientes en la interfaz de usuario, mostrando un título, un mensaje si no hay ingredientes y una cuadrícula con los ingredientes disponibles
     if (this.destruido) return;
 
     this.elemento.textContent = "";
@@ -46,7 +46,7 @@ class ListaIngredientes {
     titulo.textContent = `Ingredientes (${ingredientes.length})`;
     this.elemento.appendChild(titulo);
 
-    if (ingredientes.length === 0) {
+    if (ingredientes.length === 0) { // se encarga de mostrar un mensaje si no hay ingredientes disponibles
       const vacio = document.createElement("p");
       vacio.className = "texto-ayuda";
       vacio.textContent = "Esta receta no tiene ingredientes registrados.";
@@ -89,7 +89,7 @@ class ListaIngredientes {
     this.elemento.appendChild(lista);
   }
 
-  destruir() {
+  destruir() { // se encarga de destruir la lista de ingredientes y limpiar los eventos
     if (this.destruido) return;
     this.destruido = true;
     this.elemento.remove();

@@ -1,4 +1,4 @@
-class EstadoCarga {
+class EstadoCarga { /* se encarga de manejar el estado de carga de la interfaz de usuario, mostrando diferentes vistas según el estado actual */
   constructor(contenedor, props = {}) {
     this.contenedor = contenedor;
     this.estado = {
@@ -16,12 +16,12 @@ class EstadoCarga {
     this.configurarEventos();
   }
 
-  crearElemento() {
+  crearElemento() { /* crea un elemento div que contendrá el estado de carga y lo agrega al contenedor proporcionado */
     this.elemento = document.createElement('div');
     this.contenedor.appendChild(this.elemento);
   }
 
-  renderizar() {
+  renderizar() { /* renderiza el estado de carga en el elemento creado, mostrando diferentes vistas según el estado actual */
     this.elemento.textContent = '';
 
     if (this.estado.modo === 'cargando') {
@@ -72,7 +72,7 @@ class EstadoCarga {
     this.elemento.appendChild(bloque);
   }
 
-  configurarEventos() {
+  configurarEventos() { /* configura el evento de clic en el botón de reintentar, si está presente, para disparar un evento personalizado 'reintentar-accion' */
     this.manejadorReintentar = (e) => {
       if (e.target.classList.contains('btn-reintentar')) {
         this.elemento.dispatchEvent(
@@ -83,7 +83,7 @@ class EstadoCarga {
     this.elemento.addEventListener('click', this.manejadorReintentar);
   }
 
-  destruir() {
+  destruir() { /* destruye el elemento de estado de carga y elimina el evento de clic en el botón de reintentar, si está presente */
     if (this.elemento) {
       this.elemento.removeEventListener('click', this.manejadorReintentar);
       this.elemento.remove();
