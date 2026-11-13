@@ -6,7 +6,8 @@
  * Responsabilidad del Integrante 2. Todo cálculo ignora mayúsculas, acentos y
  * espacios sobrantes para que "Chicken" y " chicken " cuenten como iguales.
  */
-const ServicioComparacion = {
+const ServicioComparacion = { // se encarga de calcular métricas de comparación entre dos recetas completas,
+//  incluyendo similitud de ingredientes, pasos, palabras, categoría, origen y etiquetas
   normalizar(texto) {
     return String(texto ?? "")
       .trim()
@@ -117,3 +118,5 @@ const ServicioComparacion = {
     };
   }
 };
+// la lógica de comparación de recetas se encuentra en el objeto ServicioComparacion, que proporciona métodos para normalizar texto,
+//  mapear entidades, contar palabras y calcular métricas de similitud entre dos recetas completas.  

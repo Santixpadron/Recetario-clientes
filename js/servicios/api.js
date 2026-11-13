@@ -1,6 +1,6 @@
 const URL_BASE_API = 'https://www.themealdb.com/api/json/v1/1/';
 
-class ErrorApi extends Error {
+class ErrorApi extends Error { // se encarga de representar un error de la API, con un tipo y un mensaje descriptivo
   constructor(tipo, mensaje, codigoEstado = null) {
     super(mensaje);
     this.tipo = tipo; // 'SIN_CONEXION' | 'SERVICIO_NO_DISPONIBLE' | 'ABORTADO'
@@ -8,7 +8,7 @@ class ErrorApi extends Error {
   }
 }
 
-const ServicioApi = {
+const ServicioApi = { // se encarga de manejar las peticiones a la API de TheMealDB, incluyendo la búsqueda de recetas, obtención de detalles y filtrado por categorías, origenes e ingredientes
   esCancelacion(error) {
     return Boolean(
       error &&
@@ -16,7 +16,7 @@ const ServicioApi = {
     );
   },
 
-  async peticionCentralizada(endpoint, opciones = {}) {
+  async peticionCentralizada(endpoint, opciones = {}) { // se encarga de realizar una petición a la API de TheMealDB, manejando errores de conexión, estado de respuesta y parseo de JSON
     let respuesta;
     try {
       respuesta = await fetch(`${URL_BASE_API}${endpoint}`, {
@@ -47,7 +47,7 @@ const ServicioApi = {
     }
   },
 
-  async buscarPorNombre(nombre, signal) {
+  async buscarPorNombre(nombre, signal) { // se encarga de buscar recetas por nombre en la API de TheMealDB, normalizando los resultados y almacenándolos en caché
     const datos = await this.peticionCentralizada(
       `search.php?s=${encodeURIComponent(nombre.trim())}`,
       { signal }
@@ -60,7 +60,7 @@ const ServicioApi = {
     });
   },
 
-  async obtenerRecetaPorId(id, signal) {
+  async obtenerRecetaPorId(id, signal) { // se encarga de obtener los detalles de una receta por su ID en la API de TheMealDB, normalizando el resultado y almacenándolo en caché
     const enCache = cacheMemoria.obtenerReceta(id);
     if (enCache) return enCache;
 
@@ -76,7 +76,7 @@ const ServicioApi = {
     return normalizada;
   },
 
-  async obtenerRecetaAleatoria(idExcluir = null, signal) {
+  async obtenerRecetaAleatoria(idExcluir = null, signal) { // se encarga de obtener una receta aleatoria de la API de TheMealDB, evitando un ID específico si se proporciona, normalizando el resultado y almacenándolo en caché
     let intentos = 0;
     while (intentos < 5) {
       intentos++;
@@ -92,7 +92,7 @@ const ServicioApi = {
     throw new ErrorApi('SERVICIO_NO_DISPONIBLE', 'No se pudo obtener una receta aleatoria.');
   },
 
-  async obtenerCategorias() {
+  async obtenerCategorias() { // se encarga de obtener la lista de categorías de recetas de la API de TheMealDB, normalizando los resultados y almacenándolos en caché
     const enCache = cacheMemoria.obtenerCategorias();
     if (enCache) return enCache;
 
@@ -107,7 +107,7 @@ const ServicioApi = {
     return lista;
   },
 
-  async obtenerOrigenes() {
+  async obtenerOrigenes() { // se encarga de obtener la lista de orígenes de recetas de la API de TheMealDB, normalizando los resultados y almacenándolos en caché
     const enCache = cacheMemoria.obtenerOrigenes();
     if (enCache) return enCache;
 
@@ -119,7 +119,7 @@ const ServicioApi = {
     return lista;
   },
 
-  async obtenerIngredientes() {
+  async obtenerIngredientes() { // se encarga de obtener la lista de ingredientes de recetas de la API de TheMealDB, normalizando los resultados y almacenándolos en caché
     const enCache = cacheMemoria.obtenerIngredientes();
     if (enCache) return enCache;
 
@@ -131,7 +131,7 @@ const ServicioApi = {
     return lista;
   },
 
-  async filtrarPorCategoria(categoria, signal) {
+  async filtrarPorCategoria(categoria, signal) { // se encarga de filtrar recetas por categoría en la API de TheMealDB, normalizando los resultados y almacenándolos en caché
     const datos = await this.peticionCentralizada(
       `filter.php?c=${encodeURIComponent(categoria)}`,
       { signal }
@@ -140,7 +140,7 @@ const ServicioApi = {
     return datos.meals.map((m) => ServicioRecetas.normalizarResumen(m));
   },
 
-  async filtrarPorOrigen(origen, signal) {
+  async filtrarPorOrigen(origen, signal) { // se encarga de filtrar recetas por origen en la API de TheMealDB, normalizando los resultados y almacenándolos en caché
     const datos = await this.peticionCentralizada(
       `filter.php?a=${encodeURIComponent(origen)}`,
       { signal }
@@ -149,7 +149,7 @@ const ServicioApi = {
     return datos.meals.map((m) => ServicioRecetas.normalizarResumen(m));
   },
 
-  async filtrarPorIngrediente(ingrediente, signal) {
+  async filtrarPorIngrediente(ingrediente, signal) { // se encarga de filtrar recetas por ingrediente en la API de TheMealDB, normalizando los resultados y almacenándolos en caché
     const datos = await this.peticionCentralizada(
       `filter.php?i=${encodeURIComponent(ingrediente)}`,
       { signal }
